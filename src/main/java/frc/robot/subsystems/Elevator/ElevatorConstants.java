@@ -6,5 +6,8 @@ package frc.robot.subsystems.Elevator;
 
 /** Add your docs here. */
 public class ElevatorConstants {
+    public static int LEADER_MOTOR_ID;
+    public static int FOLLOWER_MOTOR_ID;
+
     
 }

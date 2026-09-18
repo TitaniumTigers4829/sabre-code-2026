@@ -4,13 +4,23 @@
 
 package frc.robot.subsystems.Elevator;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ElevatorSubsystem extends SubsystemBase {
-  public TalonFX leaderMotor;
-  public TalonFX followerMotor;
+  public TalonFX leaderMotor = new TalonFX(ElevatorConstants.LEADER_MOTOR_ID);
+  public TalonFX followerMotor = new TalonFX(ElevatorConstants.FOLLOWER_MOTOR_ID);
+
+  public TalonFXConfiguration configs = new TalonFXConfiguration();
+  public StatusSignal position = leaderMotor.getPosition();
+  public StatusSignal voltage = leaderMotor.getMotorVoltage();
+  
+  //Remember this to continue, this bum ass honduras struggle with a get call
+
+  
 
   public ElevatorSubsystem() {}
 
