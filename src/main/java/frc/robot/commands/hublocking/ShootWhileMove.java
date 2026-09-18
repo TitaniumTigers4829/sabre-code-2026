@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
-import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveDrive;
 import java.util.Optional;
@@ -19,9 +18,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class ShootWhileMove extends Command {
   private final ShooterSubsystem shooter;
-  private final AdjustableHoodSubsystem hood;
   private final SwerveDrive drive;
-  private final BooleanSupplier overridingHood;
   private final BooleanSupplier useOneMotor;
 
   Pose2d robotPose;
@@ -55,22 +52,15 @@ public class ShootWhileMove extends Command {
             {5.0, 1.45}
           });
 
-  public ShootWhileMove(
-      SwerveDrive drive,
-      ShooterSubsystem shooter,
-      AdjustableHoodSubsystem hood,
-      BooleanSupplier overridingHood,
-      BooleanSupplier useOneMotor) {
+  public ShootWhileMove(SwerveDrive drive, ShooterSubsystem shooter, BooleanSupplier useOneMotor) {
     this.drive = drive;
     this.shooter = shooter;
-    this.hood = hood;
-    this.overridingHood = overridingHood;
     this.useOneMotor = useOneMotor;
   }
 
   // Still lets you make a "normal" one for if you never want to override e.g. autos
-  public ShootWhileMove(SwerveDrive drive, ShooterSubsystem shooter, AdjustableHoodSubsystem hood) {
-    this(drive, shooter, hood, () -> false, () -> false);
+  public ShootWhileMove(SwerveDrive drive, ShooterSubsystem shooter) {
+    this(drive, shooter, () -> false);
   }
 
   @Override
@@ -138,13 +128,6 @@ public class ShootWhileMove extends Command {
     }
     shooter.setPercentOutput(distance, useOneMotor.getAsBoolean());
 
-    if (this.overridingHood.getAsBoolean()) {
-      shooter.setRollerSpeed(0);
-      shooter.stopShoot();
-    } else {
-      hood.setHoodAngle(distance);
-    }
-
     Logger.recordOutput("Shoot on move At Hub/Desired Hub", offsettedTarget);
 
     Logger.recordOutput("Shoot on move At Hub/Distance to Desire Hub", distance);
@@ -167,6 +150,5 @@ public class ShootWhileMove extends Command {
   @Override
   public void end(boolean interrupted) {
     shooter.stopShoot();
-    hood.setAngleWithoutDist(0);
   }
 }

@@ -22,12 +22,8 @@ import frc.robot.commands.intake.MoveIntakeUpCommand;
 import frc.robot.commands.intake.OuttakeCommand;
 import frc.robot.commands.intake.ReverseKickerAndRollers;
 // import frc.robot.commands.intake.ReverseSpindexerCommand;
-import frc.robot.commands.shooter.HoodUpCommand;
-import frc.robot.commands.shooter.ManualHoodDown;
-import frc.robot.commands.shooter.PassFuelCommand;
+import frc.robot.commands.shooter.DumperShootCommand;
 import frc.robot.extras.util.JoystickUtil;
-import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
-import frc.robot.subsystems.adjustableHood.PhysicalAdjustableHood;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.PhysicalIntake;
 import frc.robot.subsystems.shooter.PhysicalShooter;
@@ -61,7 +57,6 @@ public class Robot extends LoggedRobot {
   private SwerveDrive swerveDrive;
   private VisionSubsystem visionSubsystem;
   private ShooterSubsystem shooterSubsystem;
-  private AdjustableHoodSubsystem hoodSubsystem;
   private IntakeSubsystem intakeSubsystem;
 
   private Autos autos;
@@ -212,12 +207,8 @@ public class Robot extends LoggedRobot {
     driverController
         .b()
         .whileTrue(
-            new PassFuelCommand(
-                swerveDrive,
-                shooterSubsystem,
-                hoodSubsystem,
-                () -> operatorController.povDown().getAsBoolean()));
-    driverController.y().whileTrue(new HoodUpCommand(hoodSubsystem));
+            new DumperShootCommand(
+                swerveDrive, shooterSubsystem, () -> operatorController.povDown().getAsBoolean()));
     driverController.a().whileTrue(new DefenseCommand(intakeSubsystem));
     // driverController.b().whileTrue(new ReverseSpindexerCommand(shooterSubsystem));
     driverController.leftTrigger().whileTrue(new ReverseKickerAndRollers(shooterSubsystem));
@@ -230,13 +221,7 @@ public class Robot extends LoggedRobot {
 
     driverController
         .rightTrigger()
-        .whileTrue(
-            new ShootWhileMove(
-                swerveDrive,
-                shooterSubsystem,
-                hoodSubsystem,
-                () -> operatorController.povDown().getAsBoolean(),
-                () -> false));
+        .whileTrue(new ShootWhileMove(swerveDrive, shooterSubsystem, () -> false));
   }
 
   /** Configures the operator controller buttons and axes to control the robot */
@@ -255,10 +240,6 @@ public class Robot extends LoggedRobot {
     operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
 
     operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
-
-    operatorController.povDown().whileTrue(new ManualHoodDown(hoodSubsystem));
-
-    operatorController.povLeft().onTrue(new InstantCommand(() -> hoodSubsystem.rezeroHood()));
   }
 
   /** Checks the git status and records it to the log */
@@ -320,7 +301,6 @@ public class Robot extends LoggedRobot {
     powerDistribution.clearStickyFaults();
     powerDistribution.setSwitchableChannel(true);
     powerDistribution.close();
-    hoodSubsystem.rezeroHood();
   }
 
   /** Sets up the subsystems based on the robot type */
@@ -337,7 +317,6 @@ public class Robot extends LoggedRobot {
                 new PhysicalModule(SwerveConstants.compModuleConfigs[3]));
         this.visionSubsystem = new VisionSubsystem(new PhysicalVision() {}); // PhysicalVision
         this.shooterSubsystem = new ShooterSubsystem(new PhysicalShooter());
-        this.hoodSubsystem = new AdjustableHoodSubsystem(new PhysicalAdjustableHood());
         this.intakeSubsystem = new IntakeSubsystem(new PhysicalIntake());
       }
       case DEV_ROBOT -> {
@@ -408,11 +387,7 @@ public class Robot extends LoggedRobot {
   private void setupAuto() {
     this.autos =
         new Autos(
-            this.swerveDrive,
-            this.visionSubsystem,
-            this.shooterSubsystem,
-            this.hoodSubsystem,
-            this.intakeSubsystem);
+            this.swerveDrive, this.visionSubsystem, this.shooterSubsystem, this.intakeSubsystem);
   }
 
   /** This function is called periodically during operator control. */

@@ -6,18 +6,17 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
-import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveDrive;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
-public class PassFuelCommand extends Command {
+public class DumperShootCommand extends Command {
   private final ShooterSubsystem shooter;
-  private final AdjustableHoodSubsystem hood;
   private final SwerveDrive drive;
   private final BooleanSupplier overridingHood;
 
@@ -54,16 +53,12 @@ public class PassFuelCommand extends Command {
             {10, 3}
           });
 
-  public PassFuelCommand(
-      SwerveDrive drive,
-      ShooterSubsystem shooter,
-      AdjustableHoodSubsystem hood,
-      BooleanSupplier overridingHood) {
+  public DumperShootCommand(
+      SwerveDrive drive, ShooterSubsystem shooter, BooleanSupplier overridingHood) {
     this.drive = drive;
     this.shooter = shooter;
-    this.hood = hood;
     this.overridingHood = overridingHood;
-    addRequirements(shooter, hood);
+    addRequirements(shooter);
   }
 
   @Override
@@ -110,15 +105,9 @@ public class PassFuelCommand extends Command {
 
     distance = offsettedTarget.getTranslation().getDistance(turretPose);
 
-    deltaX = offsettedTarget.getX() - turretPose.getX();
-    deltaY = offsettedTarget.getY() - turretPose.getY();
+    shooter.setPercentOutput(distance, false);
 
-    double turretAngleRad = Math.atan2(deltaY, deltaX) - robotPose.getRotation().getRadians();
-    // Wrap to [-pi, pi]
-    turretAngleRad = Math.atan2(Math.sin(turretAngleRad), Math.cos(turretAngleRad));
-    double desiredHeading = turretAngleRad / (2.0 * Math.PI);
-
-    desiredHeading -= 0.25; // .25 is because we zero it facing left instead of forward
+    SmartDashboard.putNumber("DistFromHub", distance);
   }
 
   @Override
@@ -129,6 +118,5 @@ public class PassFuelCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     shooter.stopShoot();
-    hood.setAngleWithoutDist(0);
   }
 }
