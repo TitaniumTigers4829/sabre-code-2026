@@ -79,8 +79,8 @@ public class ShootWhileMove extends Command {
   @Override
   public void execute() {
     dampener = -0.5;
+    turretPose = robotPose.getTranslation();
     robotPose = drive.getEstimatedPose();
-
     fieldRelative =
         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
     // fieldRelative = new ChassisSpeeds(0, 0, 0);

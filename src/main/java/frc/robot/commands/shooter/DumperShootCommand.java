@@ -76,6 +76,7 @@ public class DumperShootCommand extends Command {
   public void execute() {
     dampener = -1;
 
+    turretPose = robotPose.getTranslation();
     robotPose = drive.getEstimatedPose();
     fieldRelative =
         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
