@@ -34,17 +34,17 @@ public class PhysicalShooter implements ShooterInterface {
 
   LoggedTunableNumber flywheelRPS = new LoggedTunableNumber("Shooter/RPS", 0.0);
 
-  private final TalonFX leaderFlywheelMotor =
-      new TalonFX(ShooterConstants.LEADER_FLYWHEEL_MOTOR_ID, HardwareConstants.RIO_CAN_BUS_STRING);
-  private final TalonFX followerFlywheelMotor =
+  private final TalonFX topLeftFlywheelMotor =
+      new TalonFX(ShooterConstants.TOP_LEFT_FLYWHEEL_MOTOR_ID);
+  private final TalonFX bottomLeftFlywheelMotor =
       new TalonFX(
-          ShooterConstants.FOLLOWER_FLYWHEEL_MOTOR_ID, HardwareConstants.RIO_CAN_BUS_STRING);
-  private final TalonFX kickerAndRollerMotor =
-      new TalonFX(ShooterConstants.KICKER_AND_ROLLER_MOTOR_ID);
-  private final TalonFX frontRollerMotor = new TalonFX(ShooterConstants.FRONT_ROLLER_MOTOR_ID);
-  // private final TalonFX backMotor= new TalonFX(ShooterConstants.BACK_ROLLER_MOTOR_ID);
+          ShooterConstants.BOTTOM_LEFT_FLYWHEEL_MOTOR_ID);
+  private final TalonFX topRightFlywheelMotor =
+      new TalonFX(ShooterConstants.TOP_RIGHT_FLYWHEEL_MOTOR_ID);
+  private final TalonFX bottomRightFlywheelMotor = new TalonFX(ShooterConstants.BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID);
+  private final TalonFX rollerMotor = new TalonFX(ShooterConstants.ROLLER_MOTOR_ID);
 
-  MotorAlignmentValue motorAlignment = MotorAlignmentValue.Opposed;
+  // MotorAlignmentValue motorAlignment = MotorAlignmentValue.Opposed;
 
   private final SingleLinearInterpolator flywheelRPMLookupValues;
 
@@ -90,45 +90,44 @@ public class PhysicalShooter implements ShooterInterface {
 
     // TODO: timeouts
     // TODO: unscuff
-    leaderFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    bottomLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    topRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
 
     leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
-    followerFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    topLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
     // kickerMotor.getConfigurator().apply(leaderFlywheelConfig);
     // leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // spindexerMotor.inve
     TalonFXConfiguration rollerConfig = new TalonFXConfiguration();
-    TalonFXConfiguration kickerConfig = new TalonFXConfiguration();
+    // TalonFXConfiguration kickerConfig = new TalonFXConfiguration();
     // TODO: tune
     rollerConfig.CurrentLimits.StatorCurrentLimit = 60;
     rollerConfig.CurrentLimits.SupplyCurrentLimit = 10;
     rollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     rollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     rollerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
-    kickerConfig.CurrentLimits.StatorCurrentLimit = 100;
-    kickerConfig.CurrentLimits.SupplyCurrentLimit = 100;
-    kickerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    kickerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    kickerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-
-    kickerAndRollerMotor.getConfigurator().apply(kickerConfig);
     rollerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    frontRollerMotor.getConfigurator().apply(rollerConfig);
+
+    rollerMotor.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
 
     flywheelRPMLookupValues =
         new SingleLinearInterpolator(ShooterConstants.DISTANCE_TO_FLYWHEEL_RPM);
 
-    currentRPS = leaderFlywheelMotor.getVelocity();
-    rollerVelocity = frontRollerMotor.getVelocity();
+    currentRPS = topRightFlywheelMotor.getVelocity();
+    rollerVelocity = rollerMotor.getVelocity();
 
     currentRPS.setUpdateFrequency(100);
     rollerVelocity.setUpdateFrequency(50);
 
-    ParentDevice.optimizeBusUtilizationForAll(leaderFlywheelMotor);
+    ParentDevice.optimizeBusUtilizationForAll(
+    topLeftFlywheelMotor, 
+    topRightFlywheelMotor, 
+    bottomLeftFlywheelMotor, 
+    bottomRightFlywheelMotor);
   }
 
   public void updateInputs(ShooterInputs inputs) {
@@ -144,21 +143,17 @@ public class PhysicalShooter implements ShooterInterface {
 
   // test
   public void setPercentOutput(double distance, boolean useOneMotor) {
-    counter1++;
-    SmartDashboard.putNumber("counter1", counter1);
     // double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
     double desiredSpeed = flywheelRPS.get();
-    leaderFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
-    if (!useOneMotor) {
-      followerFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
-    }
+    topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
+    topRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
+    bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
+    bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
     SmartDashboard.putNumber("desiredRPS", desiredSpeed);
     SmartDashboard.putNumber("currentRPS", currentRPS.refresh().getValueAsDouble());
-
-    // SmartDashboard.putNumber("desired rps", desiredSpeed);
     SmartDashboard.putBoolean("ready to shoot", isUpToSpeed());
 
     if (isUpToSpeed()) {
@@ -167,7 +162,7 @@ public class PhysicalShooter implements ShooterInterface {
 
     if (counter1 < 20) {
       setRollerSpeed(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
-      setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
+      // setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
       return;
     }
 
@@ -175,7 +170,7 @@ public class PhysicalShooter implements ShooterInterface {
 
     if (counter1 > 20) {
       setRollerSpeed(ShooterConstants.SPINDEXER_SHOOT_SPEED);
-      setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
       return;
     }
 
@@ -216,8 +211,10 @@ public class PhysicalShooter implements ShooterInterface {
 
   // UNUSED CUZ JACK IS A CHUD
   public void passFuel() {
-    leaderFlywheelMotor.setControl(rpsRequest.withVelocity(50));
-    followerFlywheelMotor.setControl(rpsRequest.withVelocity(50));
+    topRightFlywheelMotor.setControl(rpsRequest.withVelocity(50));
+    topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(50));
+    bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(50));
+    bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(50));
     this.isUpToSpeed =
         Math.abs(50 - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
@@ -264,25 +261,26 @@ public class PhysicalShooter implements ShooterInterface {
   }
 
   public void setSpeed(double rps) {
-    leaderFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
-    followerFlywheelMotor.setControl(
-        new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
+    topRightFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
+    topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
+    bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
+    bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
   }
 
   public void stopShoot() {
-    leaderFlywheelMotor.set(0);
-    followerFlywheelMotor.set(0);
-    kickerAndRollerMotor.set(0);
-    frontRollerMotor.set(0);
+    topLeftFlywheelMotor.set(0);
+    bottomLeftFlywheelMotor.set(0);
+    topRightFlywheelMotor.set(0);
+    bottomRightFlywheelMotor.set(0);
+    rollerMotor.set(0);
   }
-
   public void setRollerSpeed(double speed) {
-    frontRollerMotor.set(speed);
+    rollerMotor.set(speed);
   }
 
-  public void setKickerSpeed(double speed) {
-    kickerAndRollerMotor.set(speed);
-  }
+  // public void setKickerSpeed(double speed) {
+  //   kickerAndRollerMotor.set(speed);
+  // }
 
   public boolean setIsAimingProperly(boolean isAimingProperly) {
     return isAimingProperly;

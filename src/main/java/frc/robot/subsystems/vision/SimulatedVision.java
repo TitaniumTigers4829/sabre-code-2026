@@ -61,10 +61,10 @@ public class SimulatedVision extends PhysicalVision {
     // with visible
     // targets.
     // Instance variables
-    shooterCameraSim = new PhotonCameraSim(getSimulationCamera(Limelight.SIDE), cameraProperties);
-    pVisionSim
-        .get()
-        .addCamera(shooterCameraSim, VisionConstants.BACK_TRANSFORM); // check inverse things
+    // shooterCameraSim = new PhotonCameraSim(getSimulationCamera(Limelight.SIDE), cameraProperties);
+    // pVisionSim
+    //     .get()
+    //     .addCamera(shooterCameraSim, VisionConstants.BACK_TRANSFORM); // check inverse things
 
     // Enable the raw and processed streams. (http://localhost:1181 / 1182)
     shooterCameraSim.enableRawStream(true);
@@ -150,12 +150,12 @@ public class SimulatedVision extends PhysicalVision {
    * @param limelight The Limelight to get the camera for
    * @return A PhotonCamera object for the given Limelight
    */
-  private PhotonCamera getSimulationCamera(Limelight limelight) {
-    return switch (limelight) {
-      case SIDE -> VisionConstants.FRONT_CAMERA;
-      default -> throw new IllegalArgumentException("Invalid limelight camera " + limelight);
-    };
-  }
+  // private PhotonCamera getSimulationCamera(Limelight limelight) {
+  //   return switch (limelight) {
+  //     case SIDE -> VisionConstants.FRONT_CAMERA;
+  //     default -> throw new IllegalArgumentException("Invalid limelight camera " + limelight);
+  //   };
+  // }
 
   /**
    * Gets the Limelight network table

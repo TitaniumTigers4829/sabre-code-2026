@@ -10,8 +10,8 @@ import org.photonvision.PhotonCamera;
 
 public final class VisionConstants {
   public enum Limelight {
-    FRONT(FRONT_LEFT_LIMELIGHT_NUMBER, FRONT_LIMELIGHT_NAME, LL4_FOV_MARGIN_OF_ERROR, true),
-    SIDE(SIDE_LIMELIGHT_NUMBER, SIDE_LIMELIGHT_NAME, LL4_FOV_MARGIN_OF_ERROR, true);
+    FRONT(FRONT_LEFT_LIMELIGHT_NUMBER, FRONT_LIMELIGHT_NAME, LL4_FOV_MARGIN_OF_ERROR, true);
+    // SIDE(SIDE_LIMELIGHT_NUMBER, SIDE_LIMELIGHT_NAME, LL4_FOV_MARGIN_OF_ERROR, true);
 
     private final int id;
     private final String name;
@@ -44,7 +44,7 @@ public final class VisionConstants {
     public static Limelight fromId(int id) {
       return switch (id) {
         case 0 -> FRONT;
-        case 1 -> SIDE;
+        // case 1 -> SIDE;
         default -> throw new IllegalArgumentException("Invalid Limelight ID: " + id);
       };
     }
