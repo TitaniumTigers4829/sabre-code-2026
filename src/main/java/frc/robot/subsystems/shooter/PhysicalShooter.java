@@ -43,6 +43,7 @@ public class PhysicalShooter implements ShooterInterface {
       new TalonFX(ShooterConstants.TOP_RIGHT_FLYWHEEL_MOTOR_ID);
   private final TalonFX bottomRightFlywheelMotor = new TalonFX(ShooterConstants.BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID);
   private final TalonFX rollerMotor = new TalonFX(ShooterConstants.ROLLER_MOTOR_ID);
+  private final TalonFX rollerMotor2 = new TalonFX(ShooterConstants.ROLLER_MOTOR_2_ID);
 
   // MotorAlignmentValue motorAlignment = MotorAlignmentValue.Opposed;
 
@@ -111,6 +112,8 @@ public class PhysicalShooter implements ShooterInterface {
     rollerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     rollerMotor.getConfigurator().apply(rollerConfig);
+    rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    rollerMotor2.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
 

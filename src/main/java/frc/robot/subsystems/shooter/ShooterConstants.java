@@ -7,11 +7,12 @@ package frc.robot.subsystems.shooter;
 /** Add your docs here. */
 public class ShooterConstants {
 
-  public static int TOP_LEFT_FLYWHEEL_MOTOR_ID = 27;
-  public static int BOTTOM_LEFT_FLYWHEEL_MOTOR_ID = 6;
-  public static int TOP_RIGHT_FLYWHEEL_MOTOR_ID = 57;
-  public static int BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID = 17;
-  public static int ROLLER_MOTOR_ID = 17;
+  public static int TOP_LEFT_FLYWHEEL_MOTOR_ID = 61;
+  public static int BOTTOM_LEFT_FLYWHEEL_MOTOR_ID = 57;
+  public static int TOP_RIGHT_FLYWHEEL_MOTOR_ID = 9;
+  public static int BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID = 0;
+  public static int ROLLER_MOTOR_ID = 27;
+  public static int ROLLER_MOTOR_2_ID = 22;
 
   public static double SHOOTER_HEIGHT_FROM_GROUND = 0;
   public static double GEAR_RATIO = 0.95;
