@@ -49,28 +49,32 @@ public class SwerveDrive extends SubsystemBase {
   private final GyroInterface gyroIO;
   private final GyroInputsAutoLogged gyroInputs;
   private final SwerveModule[] swerveModules;
+
   private final PIDController xChoreoController =
       new PIDController(
-          TrajectoryConstants.AUTO_TRANSLATION_P, 0, TrajectoryConstants.AUTO_TRANSLATION_D);
+          TrajectoryConstants.AUTO_TRANSLATION_P,
+          0,
+          TrajectoryConstants.AUTO_TRANSLATION_D);
+
   private final PIDController yChoreoController =
       new PIDController(
-          TrajectoryConstants.AUTO_TRANSLATION_P, 0, TrajectoryConstants.AUTO_TRANSLATION_D);
+          TrajectoryConstants.AUTO_TRANSLATION_P,
+          0,
+          TrajectoryConstants.AUTO_TRANSLATION_D);
 
   private final PIDController rotationChoreoController =
-      new PIDController(TrajectoryConstants.AUTO_THETA_P, 0, TrajectoryConstants.AUTO_THETA_D);
-
-  // private final ProfiledPIDController rotationChoreoController =
-  //     new ProfiledPIDController(
-  //         TrajectoryConstants.AUTO_THETA_P,
-  //         0,
-  //         TrajectoryConstants.AUTO_THETA_D,
-  //         TrajectoryConstants.THETA_CONTROLLER_CONSTRAINTS);
+      new PIDController(
+          TrajectoryConstants.AUTO_THETA_P,
+          0,
+          TrajectoryConstants.AUTO_THETA_D);
 
   private Rotation2d rawGyroRotation;
+
   private final SwerveModulePosition[] lastModulePositions;
   private final SwerveDrivePoseEstimator poseEstimator;
 
-  private final RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
+  private final RepulsorFieldPlanner repulsorFieldPlanner =
+      new RepulsorFieldPlanner();
 
   private final ProfiledPIDController xRepulsorController =
       new ProfiledPIDController(
@@ -78,7 +82,8 @@ public class SwerveDrive extends SubsystemBase {
           BigDecimal.ZERO.doubleValue(),
           BigDecimal.ZERO.doubleValue(),
           new Constraints(
-              DriveConstants.REPULSOR_MAX_VELOCITY, DriveConstants.REPULSOR_MAX_ACCELERATION));
+              DriveConstants.REPULSOR_MAX_VELOCITY,
+              DriveConstants.REPULSOR_MAX_ACCELERATION));
 
   private final ProfiledPIDController yRepulsorController =
       new ProfiledPIDController(
@@ -86,15 +91,29 @@ public class SwerveDrive extends SubsystemBase {
           BigDecimal.ZERO.doubleValue(),
           BigDecimal.ZERO.doubleValue(),
           new Constraints(
-              DriveConstants.REPULSOR_MAX_VELOCITY, DriveConstants.REPULSOR_MAX_ACCELERATION));
+              DriveConstants.REPULSOR_MAX_VELOCITY,
+              DriveConstants.REPULSOR_MAX_ACCELERATION));
 
-  private final ProfiledPIDController headingRepulsorController =
+  /**
+   * Controls the robot's chassis heading.
+   *
+   * <p>This controller is used for things such as:
+   *
+   * <ul>
+   *   <li>Pointing the robot at the source
+   *   <li>Pointing the robot at the hub
+   *   <li>Facing a fixed field heading
+   *   <li>Following a heading while the driver controls translation
+   * </ul>
+   */
+  private final ProfiledPIDController headingController =
       new ProfiledPIDController(
           DriveConstants.REPULSOR_HEADING_P,
-          BigDecimal.ZERO.doubleValue(),
-          BigDecimal.ZERO.doubleValue(),
+          0.0,
+          0.0,
           new Constraints(
-              DriveConstants.REPULSOR_MAX_VELOCITY, DriveConstants.REPULSOR_MAX_ACCELERATION));
+              DriveConstants.REPULSOR_MAX_VELOCITY,
+              DriveConstants.REPULSOR_MAX_ACCELERATION));
 
   private final SwerveSetpointGenerator setpointGenerator =
       new SwerveSetpointGenerator(
@@ -107,12 +126,15 @@ public class SwerveDrive extends SubsystemBase {
           ModuleConstants.WHEEL_DIAMETER_METERS,
           WheelCof.BLACK_NITRILE.cof,
           0.0);
+
   private SwerveSetpoint setpoint = SwerveSetpoint.zeroed();
 
   private Optional<DriverStation.Alliance> alliance;
 
   private final Alert gyroDisconnectedAlert =
-      new Alert("Gyro Hardware Fault", Alert.AlertType.kError);
+      new Alert(
+          "Gyro Hardware Fault",
+          Alert.AlertType.kError);
 
   public SwerveDrive(
       GyroInterface gyroIO,
@@ -120,6 +142,7 @@ public class SwerveDrive extends SubsystemBase {
       ModuleInterface frontRightModuleIO,
       ModuleInterface backLeftModuleIO,
       ModuleInterface backRightModuleIO) {
+
     this.gyroIO = gyroIO;
     this.gyroInputs = new GyroInputsAutoLogged();
     this.rawGyroRotation = new Rotation2d();
@@ -139,6 +162,7 @@ public class SwerveDrive extends SubsystemBase {
           new SwerveModulePosition(),
           new SwerveModulePosition()
         };
+
     this.poseEstimator =
         new SwerveDrivePoseEstimator(
             DriveConstants.DRIVE_KINEMATICS,
@@ -146,14 +170,16 @@ public class SwerveDrive extends SubsystemBase {
             lastModulePositions,
             new Pose2d(),
             VecBuilder.fill(
-                DriveConstants.X_POS_TRUST, DriveConstants.Y_POS_TRUST, DriveConstants.ANGLE_TRUST),
+                DriveConstants.X_POS_TRUST,
+                DriveConstants.Y_POS_TRUST,
+                DriveConstants.ANGLE_TRUST),
             VecBuilder.fill(
                 VisionConstants.VISION_X_POS_TRUST,
                 VisionConstants.VISION_Y_POS_TRUST,
                 VisionConstants.VISION_ANGLE_TRUST));
 
     rotationChoreoController.enableContinuousInput(-Math.PI, Math.PI);
-    headingRepulsorController.enableContinuousInput(-Math.PI, Math.PI);
+    headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     gyroDisconnectedAlert.set(false);
   }
@@ -161,37 +187,65 @@ public class SwerveDrive extends SubsystemBase {
   @Override
   public void periodic() {
     final double t0 = TimeUtil.getRealTimeSeconds();
+
     updateSwerveInputs();
+
     Logger.recordOutput(
-        "SystemPerformance/OdometryFetchingTimeMS", (TimeUtil.getRealTimeSeconds() - t0) * 1000);
-    // Runs the SwerveModules periodic methods
+        "SystemPerformance/OdometryFetchingTimeMS",
+        (TimeUtil.getRealTimeSeconds() - t0) * 1000);
+
     modulesPeriodic();
   }
 
   /**
-   * Drives the robot using the joysticks.
+   * Drives the robot using the provided speeds.
    *
-   * @param xSpeed Speed of the robot in the x direction, positive being forwards.
-   * @param ySpeed Speed of the robot in the y direction, positive being left.
-   * @param rotationSpeed Angular rate of the robot in radians per second.
-   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
+   * @param xSpeed X speed in meters per second
+   * @param ySpeed Y speed in meters per second
+   * @param rotationSpeed Angular velocity in radians per second
+   * @param fieldRelative Whether X/Y are field-relative
    */
-  public void drive(double xSpeed, double ySpeed, double rotationSpeed, boolean fieldRelative) {
+  public void drive(
+      double xSpeed,
+      double ySpeed,
+      double rotationSpeed,
+      boolean fieldRelative) {
+
     ChassisSpeeds desiredSpeeds =
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed, ySpeed, rotationSpeed, getOdometryAllianceRelativeRotation2d())
-            : new ChassisSpeeds(xSpeed, ySpeed, rotationSpeed);
+                xSpeed,
+                ySpeed,
+                rotationSpeed,
+                getOdometryAllianceRelativeRotation2d())
+            : new ChassisSpeeds(
+                xSpeed,
+                ySpeed,
+                rotationSpeed);
 
     setpoint =
         setpointGenerator.generateSimpleSetpoint(
-            setpoint, desiredSpeeds, HardwareConstants.LOOP_TIME_SECONDS);
+            setpoint,
+            desiredSpeeds,
+            HardwareConstants.LOOP_TIME_SECONDS);
 
     setModuleStates(setpoint.moduleStates());
-    Logger.recordOutput("SwerveStates/DesiredStates", setpoint.moduleStates());
+
+    Logger.recordOutput(
+        "SwerveStates/DesiredStates",
+        setpoint.moduleStates());
   }
 
-  public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
+  /**
+   * Drives the robot using chassis speeds.
+   *
+   * @param speeds desired chassis speeds
+   * @param fieldRelative whether the speeds are field-relative
+   */
+  public void drive(
+      ChassisSpeeds speeds,
+      boolean fieldRelative) {
+
     drive(
         speeds.vxMetersPerSecond,
         speeds.vyMetersPerSecond,
@@ -205,39 +259,175 @@ public class SwerveDrive extends SubsystemBase {
   }
 
   /**
-   * Allows PID on the chassis rotation.
+   * Automatically rotates the robot's chassis to a desired field-relative heading.
    *
-   * @param speeds The ChassisSpeeds of the drive to set.
-   * @param rotationControl The control on the drive rotatio /* Updates the pose estimator with the
-   *     pose calculated from the april tags. How much it contributes to the pose estimation is set
-   *     by setPoseEstimatorVisionConfidence.
-   * @param visionMeasurement The pose calculated from the april tags
-   * @param currentTimeStampSeconds The time stamp in seconds of when the pose from the april tags
-   *     was calculated.
+   * <p>Translation can still be controlled independently by supplying X/Y speeds.
+   *
+   * <p>For example:
+   *
+   * <pre>
+   * autoAlignHeading(Rotation2d.fromDegrees(90));
+   * </pre>
+   *
+   * will rotate the robot so that it faces 90 degrees on the field.
+   *
+   * @param targetHeading desired field-relative robot heading
    */
-  public void addPoseEstimatorVisionMeasurement(
-      Pose2d visionMeasurement, double currentTimeStampSeconds) {
-    poseEstimator.addVisionMeasurement(visionMeasurement, currentTimeStampSeconds);
+  public void autoAlignHeading(Rotation2d targetHeading) {
+
+    double currentHeading =
+        getOdometryRotation2d().getRadians();
+
+    double targetHeadingRadians =
+        targetHeading.getRadians();
+
+    double omega =
+        headingController.calculate(
+            currentHeading,
+            targetHeadingRadians);
+
+    Logger.recordOutput(
+        "HeadingAlign/CurrentHeading",
+        currentHeading);
+
+    Logger.recordOutput(
+        "HeadingAlign/TargetHeading",
+        targetHeadingRadians);
+
+    Logger.recordOutput(
+        "HeadingAlign/Omega",
+        omega);
+
+    drive(
+        0.0,
+        0.0,
+        omega,
+        true);
   }
 
   /**
-   * Sets the standard deviations of model states, or how much the april tags contribute to the pose
-   * estimation of the robot. Lower numbers equal higher confidence and vice versa.
+   * Automatically rotates the robot toward a target while allowing
+   * field-relative translation.
    *
-   * @param xStandardDeviation the x standard deviation in meters
-   * @param yStandardDeviation the y standard deviation in meters
-   * @param thetaStandardDeviation the theta standard deviation in radians
+   * @param translationSupplier supplies field-relative X/Y translation
+   * @param targetHeading desired field-relative robot heading
    */
-  public void setPoseEstimatorVisionConfidence(
-      double xStandardDeviation, double yStandardDeviation, double thetaStandardDeviation) {
-    poseEstimator.setVisionMeasurementStdDevs(
-        VecBuilder.fill(xStandardDeviation, yStandardDeviation, thetaStandardDeviation));
+  public void autoAlignHeading(
+      Supplier<Translation2d> translationSupplier,
+      Rotation2d targetHeading) {
+
+    Translation2d translation =
+        translationSupplier.get();
+
+    double currentHeading =
+        getOdometryRotation2d().getRadians();
+
+    double targetHeadingRadians =
+        targetHeading.getRadians();
+
+    double omega =
+        headingController.calculate(
+            currentHeading,
+            targetHeadingRadians);
+
+    Logger.recordOutput(
+        "HeadingAlign/CurrentHeading",
+        currentHeading);
+
+    Logger.recordOutput(
+        "HeadingAlign/TargetHeading",
+        targetHeadingRadians);
+
+    Logger.recordOutput(
+        "HeadingAlign/Omega",
+        omega);
+
+    drive(
+        translation.getX(),
+        translation.getY(),
+        omega,
+        true);
   }
 
   /**
-   * Runs characterization on voltage
+   * Rotates the robot so that its chassis points directly at a field position.
    *
-   * @param volts current to set
+   * <p>This is useful for things such as aiming at the hub, source, or another
+   * field element.
+   *
+   * @param targetPosition field-relative position to point the robot toward
+   */
+  public void autoAlignToPoint(
+      Translation2d targetPosition) {
+
+    Translation2d robotPosition =
+        getEstimatedPose().getTranslation();
+
+    Translation2d robotToTarget =
+        targetPosition.minus(robotPosition);
+
+    if (robotToTarget.getNorm() < 0.001) {
+      drive(0.0, 0.0, 0.0, true);
+      return;
+    }
+
+    Rotation2d targetHeading =
+        robotToTarget.getAngle();
+
+    autoAlignHeading(targetHeading);
+  }
+
+  /**
+   * Rotates toward a field position while allowing the driver
+   * to control field-relative translation.
+   *
+   * @param translationSupplier driver translation supplier
+   * @param targetPosition field-relative position to face
+   */
+  public void autoAlignToPoint(
+      Supplier<Translation2d> translationSupplier,
+      Translation2d targetPosition) {
+
+    Translation2d robotPosition =
+        getEstimatedPose().getTranslation();
+
+    Translation2d robotToTarget =
+        targetPosition.minus(robotPosition);
+
+    if (robotToTarget.getNorm() < 0.001) {
+      Translation2d translation =
+          translationSupplier.get();
+
+      drive(
+          translation.getX(),
+          translation.getY(),
+          0.0,
+          true);
+
+      return;
+    }
+
+    Rotation2d targetHeading =
+        robotToTarget.getAngle();
+
+    autoAlignHeading(
+        translationSupplier,
+        targetHeading);
+  }
+
+  /**
+   * Allows PID control of the chassis rotation.
+   *
+   * @param targetHeading desired field-relative heading
+   */
+  public void setHeading(Rotation2d targetHeading) {
+    autoAlignHeading(targetHeading);
+  }
+
+  /**
+   * Runs characterization on voltage.
+   *
+   * @param volts voltage to apply
    */
   public void runCharacterizationVoltage(double volts) {
     for (SwerveModule module : swerveModules) {
@@ -246,9 +436,9 @@ public class SwerveDrive extends SubsystemBase {
   }
 
   /**
-   * Runs characterization on current
+   * Runs characterization on current.
    *
-   * @param amps current to set
+   * @param amps current to apply
    */
   public void runCharacterizationCurrent(double amps) {
     for (SwerveModule module : swerveModules) {
@@ -257,183 +447,220 @@ public class SwerveDrive extends SubsystemBase {
   }
 
   /**
-   * @param omegaSpeed Controls the rotation speed of the drivetrain for characterization.
+   * Drives the robot in place for wheel radius characterization.
+   *
+   * @param omegaSpeed angular speed
    */
   public void runWheelRadiusCharacterization(double omegaSpeed) {
-    drive(0, 0, omegaSpeed, false);
+    drive(
+        0,
+        0,
+        omegaSpeed,
+        false);
   }
 
   /**
-   * Gets the wheel radiues characterization position
+   * Gets the wheel radius characterization positions.
    *
-   * @return returns the averaged wheel positions.
+   * @return wheel positions in radians
    */
   public double[] getWheelRadiusCharacterizationPosition() {
-    double[] wheelPositions = new double[swerveModules.length];
 
-    // Iterate over all the swerve modules, get their positions and add them to the array
+    double[] wheelPositions =
+        new double[swerveModules.length];
+
     for (int i = 0; i < 4; i++) {
-      wheelPositions[i] = swerveModules[i].getDrivePositionRadians();
+      wheelPositions[i] =
+          swerveModules[i].getDrivePositionRadians();
     }
+
     return wheelPositions;
   }
 
   /**
-   * Gets the total characterization velocity of the modules.
+   * Gets the total characterization velocity.
    *
-   * @return the summed characterization velocity of the modules
+   * @return summed module velocity
    */
   public double getCharacterizationVelocity() {
+
     double velocity = 0.0;
+
     for (SwerveModule module : swerveModules) {
       velocity += module.getCharacterizationVelocity();
     }
+
     return velocity;
   }
 
-  /** Updates and logs the inputs for the odometry thread, gyro, and swerve modules. */
-  private void updateSwerveInputs() {
-    for (SwerveModule module : swerveModules) module.updateOdometryInputs();
-
-    gyroIO.updateInputs(gyroInputs);
-    Logger.processInputs("Drive/Gyro", gyroInputs);
-    Tracer.traceFunc("Gyro", () -> gyroIO.updateInputs(gyroInputs));
-    gyroDisconnectedAlert.set(!gyroInputs.isConnected);
-  }
-
   /**
-   * Moves the robot to a sample(one point) of a swerve Trajectory provided by Choreo
+   * Follows a Choreo SwerveSample.
    *
-   * @param sample trajectory
+   * @param sample trajectory sample
    */
-  public void followSwerveSample(SwerveSample sample) {
+  public void followSwerveSample(
+      SwerveSample sample) {
+
     xChoreoController.reset();
     yChoreoController.reset();
-    rotationChoreoController.reset(); // getOdometryRotation2d().getRadians());
-    // Use the summed forces in the drive method
+    rotationChoreoController.reset();
+
     ChassisSpeeds chassisSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
             sample.vx
-                // + totalForcesX
-                + xChoreoController.calculate(getEstimatedPose().getX(), sample.x),
-            sample.vy + yChoreoController.calculate(getEstimatedPose().getY(), sample.y),
+                + xChoreoController.calculate(
+                    getEstimatedPose().getX(),
+                    sample.x),
+
+            sample.vy
+                + yChoreoController.calculate(
+                    getEstimatedPose().getY(),
+                    sample.y),
+
             sample.omega
                 + rotationChoreoController.calculate(
-                    getOdometryRotation2d().getRadians(), sample.heading),
+                    getOdometryRotation2d().getRadians(),
+                    sample.heading),
+
             getOdometryRotation2d());
-    Logger.recordOutput("Trajectories/CurrentX", getEstimatedPose().getX());
-    Logger.recordOutput("Trajectories/DesiredX", sample.x);
-    Logger.recordOutput("Trajectories/vx", sample.vx);
-    Logger.recordOutput("Trajectories/omega", sample.omega);
+
+    Logger.recordOutput(
+        "Trajectories/CurrentX",
+        getEstimatedPose().getX());
+
+    Logger.recordOutput(
+        "Trajectories/DesiredX",
+        sample.x);
+
+    Logger.recordOutput(
+        "Trajectories/vx",
+        sample.vx);
+
+    Logger.recordOutput(
+        "Trajectories/omega",
+        sample.omega);
+
     Logger.recordOutput(
         "Trajectories/headingOutput",
-        rotationChoreoController.calculate(getOdometryRotation2d().getRadians(), sample.heading));
-    Logger.recordOutput("Trajectories/desiredHeading", sample.heading);
+        rotationChoreoController.calculate(
+            getOdometryRotation2d().getRadians(),
+            sample.heading));
 
-    drive(chassisSpeeds.unaryMinus(), false);
+    Logger.recordOutput(
+        "Trajectories/desiredHeading",
+        sample.heading);
+
+    drive(
+        chassisSpeeds.unaryMinus(),
+        false);
   }
 
-  /** Runs the SwerveModules periodic methods */
+  /** Runs all SwerveModule periodic methods. */
   private void modulesPeriodic() {
-    for (SwerveModule module : swerveModules) module.periodic();
+    for (SwerveModule module : swerveModules) {
+      module.periodic();
+    }
   }
 
   /**
-   * Returns if the robot speed is to zero when zeroed
+   * Returns whether the supplied speeds are zero.
    *
-   * @return is robot moving along x
-   * @return is robot moving along y
-   * @return is robot rotating
+   * @param speeds chassis speeds
+   * @return whether all chassis speeds are zero
    */
-  public boolean getZeroedSpeeds(ChassisSpeeds speeds) {
+  public boolean getZeroedSpeeds(
+      ChassisSpeeds speeds) {
+
     return speeds.vxMetersPerSecond == 0
         && speeds.vyMetersPerSecond == 0
         && speeds.omegaRadiansPerSecond == 0;
   }
 
   /**
-   * Returns the heading of the robot in degrees from 0 to 360.
+   * Returns the gyro heading in degrees.
    *
-   * @return Value is Counter-clockwise positive.
+   * @return heading in degrees
    */
   public double getHeading() {
     return gyroInputs.yawDegrees;
   }
 
   /**
-   * Gets the rate of rotation of the robot.
+   * Gets the gyro angular velocity.
    *
-   * @return The current rate in degrees per second.
+   * @return angular velocity in degrees/sec
    */
   public double getGyroRate() {
     return gyroInputs.yawVelocityDegreesPerSecond;
   }
 
   /**
-   * Gets the current roll of the gyro
+   * Gets the gyro roll.
    *
-   * @return the current roll in degrees
+   * @return roll in degrees
    */
   public double getGyroRoll() {
     return gyroInputs.rollDegrees;
   }
 
   /**
-   * Gets the current pitch of the gyro
+   * Gets the gyro pitch.
    *
-   * @return the current pitch in degrees
+   * @return pitch in degrees
    */
   public double getGyroPitch() {
     return gyroInputs.pitchDegrees;
   }
 
   /**
-   * Gets the rotation of the robot represented as a Rotation2d.
+   * Gets the gyro heading as Rotation2d.
    *
-   * @return a Rotation2d for the heading of the robot.
+   * @return gyro rotation
    */
   public Rotation2d getGyroRotation2d() {
-    return Rotation2d.fromDegrees(getHeading());
+    return Rotation2d.fromDegrees(
+        getHeading());
   }
 
   /**
-   * Gets the rotation of the robot relative to the field from the driver's perspective. This means
-   * that if the driver is on the red alliance and this method says the robot is facing 0 degrees,
-   * the robot is actually facing 180 degrees and facing the blue alliance wall.
+   * Gets the gyro heading relative to the driver's alliance.
    *
-   * @return a Rotation2d for the heading of the robot relative to the field from the driver's
-   *     perspective.
+   * @return alliance-relative gyro heading
    */
   public Rotation2d getGyroFieldRelativeRotation2d() {
-    return Rotation2d.fromDegrees(getHeading() + getAllianceAngleOffset());
+    return Rotation2d.fromDegrees(
+        getHeading()
+            + getAllianceAngleOffset());
   }
 
   /**
-   * Gets the angle offset of the robot based on the alliance color.
+   * Gets the alliance angle offset.
    *
-   * @return 0 degrees if the robot is on the blue alliance, 180 if on the red alliance.
+   * @return 0 degrees for blue, 180 degrees for red
    */
   public double getAllianceAngleOffset() {
-    alliance = DriverStation.getAlliance();
-    // If theres a glitch in the FMS and for some reason we don't know if we're red or blue, just
-    // assume we're blue
-    // This should NEVER happen
-    return alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red ? 180.0 : 0.0;
+
+    alliance =
+        DriverStation.getAlliance();
+
+    return alliance.isPresent()
+            && alliance.get()
+                == DriverStation.Alliance.Red
+        ? 180.0
+        : 0.0;
   }
 
   /**
-   * Resets the gyro heading to zero. When this is called, the robot's current heading will be
-   * considered foward.
+   * Resets gyro heading.
    */
   public void zeroHeading() {
     gyroIO.reset();
   }
 
   /**
-   * Gets the estimated field-relative pose of the robot. Positive x being forward, positive y being
-   * left. We estimate the robot's pose using the swerve modules, gyro, and vision.
+   * Gets the estimated robot pose.
    *
-   * @return the estimated pose of the robot
+   * @return estimated field-relative pose
    */
   @AutoLogOutput(key = "Odometry/Odometry")
   public Pose2d getEstimatedPose() {
@@ -441,274 +668,480 @@ public class SwerveDrive extends SubsystemBase {
   }
 
   /**
-   * Gets the rotation of the robot from the odometry. This value is only influenced by the gyro as
-   * we have set the standard deviations of the rotation from the vision measurements to a very high
-   * number (this means we have very low confidence in the rotation from vision measurements). The
-   * gyro only drifts a very small amount over time, so this value is very accurate.
+   * Gets the robot's odometry heading.
    *
-   * <p>For pretty much everything, use this method to get the rotation of the robot. This value can
-   * differ from the gyro rotation for multiple reasons, but this is the value used by anything
-   * autonomous.
-   *
-   * @return a Rotation2d for the heading of the robot.
+   * @return odometry rotation
    */
   public Rotation2d getOdometryRotation2d() {
     return getEstimatedPose().getRotation();
   }
 
   /**
-   * Gets the Rotation2d for the heading of the robot relative to the field from the driver's
-   * perspective. This method is needed so that the drive command and poseEstimator don't fight each
-   * other. It uses odometry rotation.
+   * Gets the odometry heading relative to the alliance.
    *
-   * @return a Rotation2d for the heading of the robot relative to the field from the driver's
-   *     perspective.
+   * @return alliance-relative odometry heading
    */
   public Rotation2d getOdometryAllianceRelativeRotation2d() {
-    return getEstimatedPose().getRotation().plus(Rotation2d.fromDegrees(getAllianceAngleOffset()));
+    return getEstimatedPose()
+        .getRotation()
+        .plus(
+            Rotation2d.fromDegrees(
+                getAllianceAngleOffset()));
   }
 
   /**
-   * Sets the modules to the specified states. This is what actually tells the modules what to do,
-   * so setting their rotation and speeds.
+   * Sets module states.
    *
-   * @param desiredStates The desired states for the swerve modules. The order is: frontLeft,
-   *     frontRight, backLeft, backRight (should be the same as the kinematics).
+   * @param desiredStates desired module states
    */
-  public void setModuleStates(SwerveModuleState[] desiredStates) {
+  public void setModuleStates(
+      SwerveModuleState[] desiredStates) {
+
     for (int i = 0; i < 4; i++) {
-      swerveModules[i].setOptimizedDesiredState(desiredStates[i]);
+      swerveModules[i]
+          .setOptimizedDesiredState(
+              desiredStates[i]);
     }
   }
 
-  /** Sets the modules to form an X stance. */
+  /** Sets the modules into an X stance. */
   public void setXStance() {
-    Rotation2d[] swerveHeadings = new Rotation2d[swerveModules.length];
+
+    Rotation2d[] swerveHeadings =
+        new Rotation2d[swerveModules.length];
+
     for (int i = 0; i < 4; i++) {
-      swerveHeadings[i] = Rotation2d.fromDegrees(45);
+      swerveHeadings[i] =
+          Rotation2d.fromDegrees(45);
     }
-    DriveConstants.DRIVE_KINEMATICS.resetHeadings(swerveHeadings);
+
+    DriveConstants.DRIVE_KINEMATICS
+        .resetHeadings(swerveHeadings);
+
     for (int i = 0; i < 4; i++) {
       swerveModules[i].stopModule();
     }
   }
 
   /**
-   * Updates the pose estimator with the pose calculated from the swerve modules. This works because
-   * if you know the circumference of the wheel and the angle of the wheel, you can calculate the
-   * distance the wheel has traveled. This is done for all the wheels and then the pose estimator is
-   * updated with this information.
+   * Updates pose estimation using swerve measurements.
    */
   public void addPoseEstimatorSwerveMeasurement() {
-    final SwerveModulePosition[] modulePositions = getModulePositions(),
-        moduleDeltas = getModulesDelta(modulePositions);
 
-    // If the gyro is connected, use the gyro rotation. If not, use the calculated rotation from the
-    // modules.
+    final SwerveModulePosition[] modulePositions =
+        getModulePositions();
+
+    final SwerveModulePosition[] moduleDeltas =
+        getModulesDelta(modulePositions);
+
     if (gyroInputs.isConnected) {
-      rawGyroRotation = getGyroRotation2d();
+
+      rawGyroRotation =
+          getGyroRotation2d();
+
     } else {
-      Twist2d twist = DriveConstants.DRIVE_KINEMATICS.toTwist2d(moduleDeltas);
-      rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
+
+      Twist2d twist =
+          DriveConstants.DRIVE_KINEMATICS
+              .toTwist2d(moduleDeltas);
+
+      rawGyroRotation =
+          rawGyroRotation.plus(
+              new Rotation2d(twist.dtheta));
     }
 
-    poseEstimator.updateWithTime(TimeUtil.getLogTimeSeconds(), rawGyroRotation, modulePositions);
+    poseEstimator.updateWithTime(
+        TimeUtil.getLogTimeSeconds(),
+        rawGyroRotation,
+        modulePositions);
   }
 
   /**
-   * Gets the change in the module positions between the current and last update.
+   * Gets module position deltas.
    *
-   * @param freshModulesPosition Latest module positions
-   * @return The change of the module distances and angles since the last update.
+   * @param freshModulesPosition latest positions
+   * @return module position deltas
    */
-  private SwerveModulePosition[] getModulesDelta(SwerveModulePosition[] freshModulesPosition) {
-    SwerveModulePosition[] deltas = new SwerveModulePosition[swerveModules.length];
-    for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
+  private SwerveModulePosition[] getModulesDelta(
+      SwerveModulePosition[] freshModulesPosition) {
+
+    SwerveModulePosition[] deltas =
+        new SwerveModulePosition[swerveModules.length];
+
+    for (int moduleIndex = 0;
+        moduleIndex < 4;
+        moduleIndex++) {
+
       final double deltaDistanceMeters =
           freshModulesPosition[moduleIndex].distanceMeters
-              - lastModulePositions[moduleIndex].distanceMeters;
+              - lastModulePositions[moduleIndex]
+                  .distanceMeters;
+
       deltas[moduleIndex] =
-          new SwerveModulePosition(deltaDistanceMeters, freshModulesPosition[moduleIndex].angle);
-      lastModulePositions[moduleIndex] = freshModulesPosition[moduleIndex];
+          new SwerveModulePosition(
+              deltaDistanceMeters,
+              freshModulesPosition[moduleIndex].angle);
+
+      lastModulePositions[moduleIndex] =
+          freshModulesPosition[moduleIndex];
     }
+
     return deltas;
   }
 
   /**
-   * Gets the module states (speed and angle) for all the modules.
+   * Gets measured module states.
    *
-   * @return The module states for all the modules in the order: frontLeft, frontRight, backLeft,
-   *     backRight.
+   * @return module states
    */
   @AutoLogOutput(key = "SwerveStates/Measured")
   private SwerveModuleState[] getModuleStates() {
-    SwerveModuleState[] states = new SwerveModuleState[swerveModules.length];
-    for (int i = 0; i < states.length; i++) states[i] = swerveModules[i].getMeasuredState();
+
+    SwerveModuleState[] states =
+        new SwerveModuleState[
+            swerveModules.length];
+
+    for (int i = 0; i < states.length; i++) {
+      states[i] =
+          swerveModules[i].getMeasuredState();
+    }
+
     return states;
   }
 
   /**
-   * Gets the module positions (distance and angle) for all the modules.
+   * Gets module positions.
    *
-   * @return The module positions for all the modules in the order: frontLeft, frontRight, backLeft,
-   *     backRight.
+   * @return module positions
    */
   private SwerveModulePosition[] getModulePositions() {
-    SwerveModulePosition[] positions = new SwerveModulePosition[swerveModules.length];
-    for (int i = 0; i < positions.length; i++) positions[i] = swerveModules[i].getPosition();
+
+    SwerveModulePosition[] positions =
+        new SwerveModulePosition[
+            swerveModules.length];
+
+    for (int i = 0; i < positions.length; i++) {
+      positions[i] =
+          swerveModules[i].getPosition();
+    }
+
     return positions;
   }
 
   /**
-   * Resets the estimated pose of the robot. The gyro does not need to be reset as the pose
-   * estimator will take care of that.
+   * Resets the estimated pose.
    *
-   * @param pose the new pose to set the robot to
+   * @param pose new robot pose
    */
-  public void resetEstimatedPose(Pose2d pose) {
-    poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+  public void resetEstimatedPose(
+      Pose2d pose) {
+
+    poseEstimator.resetPosition(
+        rawGyroRotation,
+        getModulePositions(),
+        pose);
   }
 
-  // For hublocking
+  // --------------------------------------------------------------------------
+  // HUB / SHOOTING
+  // --------------------------------------------------------------------------
 
   public double getDistanceFromAllianceHub() {
+
     if (AllianceFlipper.isBlue()) {
-      return FieldConstants.BLUE_HUB_CENTER.getDistance(
-          poseEstimator.getEstimatedPosition().getTranslation());
+
+      return FieldConstants.BLUE_HUB_CENTER
+          .getDistance(
+              poseEstimator
+                  .getEstimatedPosition()
+                  .getTranslation());
+
     } else {
-      return FieldConstants.RED_HUB_CENTER.getDistance(
-          poseEstimator.getEstimatedPosition().getTranslation());
+
+      return FieldConstants.RED_HUB_CENTER
+          .getDistance(
+              poseEstimator
+                  .getEstimatedPosition()
+                  .getTranslation());
     }
   }
 
   public double getShootingAngle() {
+
     return Math.atan(
-        (FieldConstants.HUB_HEIGHT_METERS - ShooterConstants.SHOOTER_HEIGHT_FROM_GROUND)
+        (FieldConstants.HUB_HEIGHT_METERS
+                - ShooterConstants.SHOOTER_HEIGHT_FROM_GROUND)
             / getDistanceFromAllianceHub());
   }
 
+  // --------------------------------------------------------------------------
+  // SOURCE ALIGNMENT
+  // --------------------------------------------------------------------------
+
   /**
-   * Checks if the robot is near the source.
+   * Checks whether the robot is near the source.
    *
-   * @return true if the robot is near the source
+   * @return whether the robot is near the source
    */
   @AutoLogOutput
   public boolean nearSource() {
+
     double maxX = 3.5;
+
     if (AllianceFlipper.isRed()) {
-      return poseEstimator.getEstimatedPosition().getX()
-          > (FieldConstants.FIELD_WIDTH_METERS - maxX);
+
+      return poseEstimator
+              .getEstimatedPosition()
+              .getX()
+          > (FieldConstants.FIELD_WIDTH_METERS
+              - maxX);
+
     } else {
-      return poseEstimator.getEstimatedPosition().getX() < maxX;
+
+      return poseEstimator
+              .getEstimatedPosition()
+              .getX()
+          < maxX;
     }
   }
 
   /**
-   * Aligns the robot's heading to the source.
+   * Automatically aligns the robot's chassis to face the source.
    *
-   * @param translationalControlSupplier The translational control for the robot.
+   * <p>The driver can still control field-relative translation.
+   *
+   * @param translationalControlSupplier driver translation supplier
    */
-  public void sourceAlign(Supplier<Translation2d> translationalControlSupplier) {
-    double targetAngle = Units.degreesToRadians(54);
+  public void sourceAlign(
+      Supplier<Translation2d> translationalControlSupplier) {
+
+    double targetAngle =
+        Units.degreesToRadians(54);
+
     if (AllianceFlipper.isRed()) {
-      targetAngle = Math.PI - targetAngle;
+      targetAngle =
+          Math.PI - targetAngle;
     }
-    if (poseEstimator.getEstimatedPosition().getY() > FieldConstants.FIELD_WIDTH_METERS / 2) {
+
+    if (poseEstimator
+            .getEstimatedPosition()
+            .getY()
+        > FieldConstants.FIELD_WIDTH_METERS / 2) {
+
       targetAngle *= -1;
     }
 
-    var translationalControl = translationalControlSupplier.get();
+    autoAlignHeading(
+        translationalControlSupplier,
+        Rotation2d.fromRadians(targetAngle));
+  }
 
-    ChassisSpeeds commandedRobotSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            new ChassisSpeeds(
-                translationalControl.getX() * DriveConstants.MAX_SPEED_METERS_PER_SECOND,
-                translationalControl.getY() * DriveConstants.MAX_SPEED_METERS_PER_SECOND,
-                headingRepulsorController.calculate(
-                    poseEstimator.getEstimatedPosition().getRotation().getRadians(), targetAngle)),
-            getOdometryRotation2d());
+  // --------------------------------------------------------------------------
+  // REPULSOR FIELD
+  // --------------------------------------------------------------------------
 
-    drive(commandedRobotSpeeds, false);
+  /**
+   * Follows the repulsor field to a goal.
+   *
+   * @param goal desired pose
+   */
+  public void followRepulsorField(
+      Pose2d goal) {
+
+    followRepulsorField(
+        goal,
+        null);
   }
 
   /**
-   * Follows the repulsor field to the goal.
+   * Follows the repulsor field to a goal.
    *
-   * @param goal the goal to follow to
+   * @param goal desired pose
+   * @param nudgeSupplier optional nudge supplier
    */
-  public void followRepulsorField(Pose2d goal) {
-    followRepulsorField(goal, null);
-  }
+  public void followRepulsorField(
+      Pose2d goal,
+      Supplier<Translation2d> nudgeSupplier) {
 
-  /**
-   * Follows the repulsor field to the goal.
-   *
-   * @param goal the goal to follow to
-   * @param nudgeSupplier a supplier for the nudge vector
-   */
-  public void followRepulsorField(Pose2d goal, Supplier<Translation2d> nudgeSupplier) {
+    repulsorFieldPlanner.setGoal(
+        goal.getTranslation());
 
-    repulsorFieldPlanner.setGoal(goal.getTranslation());
-    xRepulsorController.reset(poseEstimator.getEstimatedPosition().getX());
-    yRepulsorController.reset(poseEstimator.getEstimatedPosition().getY());
-    headingRepulsorController.reset(goal.getRotation().getRadians());
-    Logger.recordOutput("Repulsor/Goal", goal);
+    xRepulsorController.reset(
+        poseEstimator
+            .getEstimatedPosition()
+            .getX());
 
-    // RepulsorSample repulsorSample =
-    //     repulsorFieldPlanner.sampleField(
-    //         poseEstimator.getEstimatedPosition().getTranslation(),
-    //         DriveConstants.MAX_SPEED_METERS_PER_SECOND * .75,
-    //         1.5);
+    yRepulsorController.reset(
+        poseEstimator
+            .getEstimatedPosition()
+            .getY());
 
-    // ChassisSpeeds feedforward = new ChassisSpeeds(repulsorSample.vx(), repulsorSample.vy(), 0);
+    headingController.reset(
+        poseEstimator
+            .getEstimatedPosition()
+            .getRotation()
+            .getRadians());
+
+    Logger.recordOutput(
+        "Repulsor/Goal",
+        goal);
+
     ChassisSpeeds feedback =
         new ChassisSpeeds(
-            xRepulsorController.calculate(poseEstimator.getEstimatedPosition().getX(), goal.getX()),
-            yRepulsorController.calculate(poseEstimator.getEstimatedPosition().getY(), goal.getY()),
-            headingRepulsorController.calculate(
-                poseEstimator.getEstimatedPosition().getRotation().getRadians(),
-                goal.getRotation().getRadians()));
 
-    // Logger.recordOutput("Repulsor/intermediatX", repulsorSample.intermediateGoal().getX());
-    // Logger.recordOutput("Repulsor/intermediatY", repulsorSample.intermediateGoal().getY());
-    // Logger.recordOutput("Repulsor/intermediatTheta", goal.getRotation().getRadians());
+            xRepulsorController.calculate(
+                poseEstimator
+                    .getEstimatedPosition()
+                    .getX(),
+                goal.getX()),
 
-    Transform2d error = goal.minus(poseEstimator.getEstimatedPosition());
-    Logger.recordOutput("Repulsor/Error", error);
-    // Logger.recordOutput("Repulsor/Feedforward", feedforward);
-    Logger.recordOutput("Repulsor/Feedback", feedback);
+            yRepulsorController.calculate(
+                poseEstimator
+                    .getEstimatedPosition()
+                    .getY(),
+                goal.getY()),
 
-    ChassisSpeeds outputFieldRelative = feedback;
+            headingController.calculate(
+                poseEstimator
+                    .getEstimatedPosition()
+                    .getRotation()
+                    .getRadians(),
+                goal.getRotation()
+                    .getRadians()));
+
+    Transform2d error =
+        goal.minus(
+            poseEstimator
+                .getEstimatedPosition());
+
+    Logger.recordOutput(
+        "Repulsor/Error",
+        error);
+
+    Logger.recordOutput(
+        "Repulsor/Feedback",
+        feedback);
+
+    ChassisSpeeds outputFieldRelative =
+        feedback;
 
     if (nudgeSupplier != null) {
-      Translation2d nudge = nudgeSupplier.get();
-      if (nudge.getNorm() > .1) {
+
+      Translation2d nudge =
+          nudgeSupplier.get();
+
+      if (nudge.getNorm() > 0.1) {
+
         double nudgeScalar =
-            Math.min(error.getTranslation().getNorm() / 3, 1)
-                * Math.min(error.getTranslation().getNorm() / 3, 1)
+            Math.min(
+                    error.getTranslation().getNorm()
+                        / 3,
+                    1)
+                * Math.min(
+                    error.getTranslation().getNorm()
+                        / 3,
+                    1)
                 * DriveConstants.MAX_SPEED_METERS_PER_SECOND;
 
         if (AllianceFlipper.isRed()) {
-          nudge = new Translation2d(-nudge.getX(), -nudge.getY());
+          nudge =
+              new Translation2d(
+                  -nudge.getX(),
+                  -nudge.getY());
         }
+
         nudgeScalar *=
             Math.abs(
                 nudge
                     .getAngle()
                     .minus(
                         new Rotation2d(
-                            outputFieldRelative.vxMetersPerSecond,
-                            outputFieldRelative.vyMetersPerSecond))
+                            outputFieldRelative
+                                .vxMetersPerSecond,
+                            outputFieldRelative
+                                .vyMetersPerSecond))
                     .getSin());
-        outputFieldRelative.vxMetersPerSecond += nudge.getX() * nudgeScalar;
-        outputFieldRelative.vyMetersPerSecond += nudge.getY() * nudgeScalar;
+
+        outputFieldRelative.vxMetersPerSecond +=
+            nudge.getX() * nudgeScalar;
+
+        outputFieldRelative.vyMetersPerSecond +=
+            nudge.getY() * nudgeScalar;
       }
     }
 
     ChassisSpeeds outputRobotRelative =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            outputFieldRelative, poseEstimator.getEstimatedPosition().getRotation());
+            outputFieldRelative,
+            poseEstimator
+                .getEstimatedPosition()
+                .getRotation());
 
-    drive(outputRobotRelative.unaryMinus(), false);
+    drive(
+        outputRobotRelative.unaryMinus(),
+        false);
+  }
+
+  // --------------------------------------------------------------------------
+  // VISION
+  // --------------------------------------------------------------------------
+
+  /**
+   * Adds a vision measurement to the pose estimator.
+   *
+   * @param visionMeasurement vision pose
+   * @param currentTimeStampSeconds timestamp
+   */
+  public void addPoseEstimatorVisionMeasurement(
+      Pose2d visionMeasurement,
+      double currentTimeStampSeconds) {
+
+    poseEstimator.addVisionMeasurement(
+        visionMeasurement,
+        currentTimeStampSeconds);
+  }
+
+  /**
+   * Sets vision measurement confidence.
+   *
+   * @param xStandardDeviation X standard deviation
+   * @param yStandardDeviation Y standard deviation
+   * @param thetaStandardDeviation heading standard deviation
+   */
+  public void setPoseEstimatorVisionConfidence(
+      double xStandardDeviation,
+      double yStandardDeviation,
+      double thetaStandardDeviation) {
+
+    poseEstimator.setVisionMeasurementStdDevs(
+        VecBuilder.fill(
+            xStandardDeviation,
+            yStandardDeviation,
+            thetaStandardDeviation));
+  }
+
+  // --------------------------------------------------------------------------
+  // GYRO / INPUTS
+  // --------------------------------------------------------------------------
+
+  /** Updates gyro and module inputs. */
+  private void updateSwerveInputs() {
+
+    for (SwerveModule module : swerveModules) {
+      module.updateOdometryInputs();
+    }
+
+    gyroIO.updateInputs(gyroInputs);
+
+    Logger.processInputs(
+        "Drive/Gyro",
+        gyroInputs);
+
+    Tracer.traceFunc(
+        "Gyro",
+        () -> gyroIO.updateInputs(gyroInputs));
+
+    gyroDisconnectedAlert.set(
+        !gyroInputs.isConnected);
   }
 }

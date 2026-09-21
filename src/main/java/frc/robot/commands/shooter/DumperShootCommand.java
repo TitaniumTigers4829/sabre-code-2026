@@ -104,6 +104,13 @@ public class DumperShootCommand extends Command {
       iterativeDistance = offsettedTarget.getTranslation().getDistance(turretPose);
     }
 
+    double targetAngleRad = Math.atan2(deltaY, deltaX);
+    // Wrap to [-pi, pi]
+    targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
+    Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
+
+    drive.autoAlignHeading(desiredHeading);
+
     distance = offsettedTarget.getTranslation().getDistance(turretPose);
 
     shooter.setPercentOutput(distance, false);
