@@ -52,29 +52,21 @@ public class SwerveDrive extends SubsystemBase {
 
   private final PIDController xChoreoController =
       new PIDController(
-          TrajectoryConstants.AUTO_TRANSLATION_P,
-          0,
-          TrajectoryConstants.AUTO_TRANSLATION_D);
+          TrajectoryConstants.AUTO_TRANSLATION_P, 0, TrajectoryConstants.AUTO_TRANSLATION_D);
 
   private final PIDController yChoreoController =
       new PIDController(
-          TrajectoryConstants.AUTO_TRANSLATION_P,
-          0,
-          TrajectoryConstants.AUTO_TRANSLATION_D);
+          TrajectoryConstants.AUTO_TRANSLATION_P, 0, TrajectoryConstants.AUTO_TRANSLATION_D);
 
   private final PIDController rotationChoreoController =
-      new PIDController(
-          TrajectoryConstants.AUTO_THETA_P,
-          0,
-          TrajectoryConstants.AUTO_THETA_D);
+      new PIDController(TrajectoryConstants.AUTO_THETA_P, 0, TrajectoryConstants.AUTO_THETA_D);
 
   private Rotation2d rawGyroRotation;
 
   private final SwerveModulePosition[] lastModulePositions;
   private final SwerveDrivePoseEstimator poseEstimator;
 
-  private final RepulsorFieldPlanner repulsorFieldPlanner =
-      new RepulsorFieldPlanner();
+  private final RepulsorFieldPlanner repulsorFieldPlanner = new RepulsorFieldPlanner();
 
   private final ProfiledPIDController xRepulsorController =
       new ProfiledPIDController(
@@ -82,8 +74,7 @@ public class SwerveDrive extends SubsystemBase {
           BigDecimal.ZERO.doubleValue(),
           BigDecimal.ZERO.doubleValue(),
           new Constraints(
-              DriveConstants.REPULSOR_MAX_VELOCITY,
-              DriveConstants.REPULSOR_MAX_ACCELERATION));
+              DriveConstants.REPULSOR_MAX_VELOCITY, DriveConstants.REPULSOR_MAX_ACCELERATION));
 
   private final ProfiledPIDController yRepulsorController =
       new ProfiledPIDController(
@@ -91,8 +82,7 @@ public class SwerveDrive extends SubsystemBase {
           BigDecimal.ZERO.doubleValue(),
           BigDecimal.ZERO.doubleValue(),
           new Constraints(
-              DriveConstants.REPULSOR_MAX_VELOCITY,
-              DriveConstants.REPULSOR_MAX_ACCELERATION));
+              DriveConstants.REPULSOR_MAX_VELOCITY, DriveConstants.REPULSOR_MAX_ACCELERATION));
 
   /**
    * Controls the robot's chassis heading.
@@ -112,8 +102,7 @@ public class SwerveDrive extends SubsystemBase {
           0.0,
           0.0,
           new Constraints(
-              DriveConstants.REPULSOR_MAX_VELOCITY,
-              DriveConstants.REPULSOR_MAX_ACCELERATION));
+              DriveConstants.REPULSOR_MAX_VELOCITY, DriveConstants.REPULSOR_MAX_ACCELERATION));
 
   private final SwerveSetpointGenerator setpointGenerator =
       new SwerveSetpointGenerator(
@@ -132,9 +121,7 @@ public class SwerveDrive extends SubsystemBase {
   private Optional<DriverStation.Alliance> alliance;
 
   private final Alert gyroDisconnectedAlert =
-      new Alert(
-          "Gyro Hardware Fault",
-          Alert.AlertType.kError);
+      new Alert("Gyro Hardware Fault", Alert.AlertType.kError);
 
   public SwerveDrive(
       GyroInterface gyroIO,
@@ -170,9 +157,7 @@ public class SwerveDrive extends SubsystemBase {
             lastModulePositions,
             new Pose2d(),
             VecBuilder.fill(
-                DriveConstants.X_POS_TRUST,
-                DriveConstants.Y_POS_TRUST,
-                DriveConstants.ANGLE_TRUST),
+                DriveConstants.X_POS_TRUST, DriveConstants.Y_POS_TRUST, DriveConstants.ANGLE_TRUST),
             VecBuilder.fill(
                 VisionConstants.VISION_X_POS_TRUST,
                 VisionConstants.VISION_Y_POS_TRUST,
@@ -191,8 +176,7 @@ public class SwerveDrive extends SubsystemBase {
     updateSwerveInputs();
 
     Logger.recordOutput(
-        "SystemPerformance/OdometryFetchingTimeMS",
-        (TimeUtil.getRealTimeSeconds() - t0) * 1000);
+        "SystemPerformance/OdometryFetchingTimeMS", (TimeUtil.getRealTimeSeconds() - t0) * 1000);
 
     modulesPeriodic();
   }
@@ -205,35 +189,21 @@ public class SwerveDrive extends SubsystemBase {
    * @param rotationSpeed Angular velocity in radians per second
    * @param fieldRelative Whether X/Y are field-relative
    */
-  public void drive(
-      double xSpeed,
-      double ySpeed,
-      double rotationSpeed,
-      boolean fieldRelative) {
+  public void drive(double xSpeed, double ySpeed, double rotationSpeed, boolean fieldRelative) {
 
     ChassisSpeeds desiredSpeeds =
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                xSpeed,
-                ySpeed,
-                rotationSpeed,
-                getOdometryAllianceRelativeRotation2d())
-            : new ChassisSpeeds(
-                xSpeed,
-                ySpeed,
-                rotationSpeed);
+                xSpeed, ySpeed, rotationSpeed, getOdometryAllianceRelativeRotation2d())
+            : new ChassisSpeeds(xSpeed, ySpeed, rotationSpeed);
 
     setpoint =
         setpointGenerator.generateSimpleSetpoint(
-            setpoint,
-            desiredSpeeds,
-            HardwareConstants.LOOP_TIME_SECONDS);
+            setpoint, desiredSpeeds, HardwareConstants.LOOP_TIME_SECONDS);
 
     setModuleStates(setpoint.moduleStates());
 
-    Logger.recordOutput(
-        "SwerveStates/DesiredStates",
-        setpoint.moduleStates());
+    Logger.recordOutput("SwerveStates/DesiredStates", setpoint.moduleStates());
   }
 
   /**
@@ -242,9 +212,7 @@ public class SwerveDrive extends SubsystemBase {
    * @param speeds desired chassis speeds
    * @param fieldRelative whether the speeds are field-relative
    */
-  public void drive(
-      ChassisSpeeds speeds,
-      boolean fieldRelative) {
+  public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
 
     drive(
         speeds.vxMetersPerSecond,
@@ -275,144 +243,95 @@ public class SwerveDrive extends SubsystemBase {
    */
   public void autoAlignHeading(Rotation2d targetHeading) {
 
-    double currentHeading =
-        getOdometryRotation2d().getRadians();
+    double currentHeading = getOdometryRotation2d().getRadians();
 
-    double targetHeadingRadians =
-        targetHeading.getRadians();
+    double targetHeadingRadians = targetHeading.getRadians();
 
-    double omega =
-        headingController.calculate(
-            currentHeading,
-            targetHeadingRadians);
+    double omega = headingController.calculate(currentHeading, targetHeadingRadians);
 
-    Logger.recordOutput(
-        "HeadingAlign/CurrentHeading",
-        currentHeading);
+    Logger.recordOutput("HeadingAlign/CurrentHeading", currentHeading);
 
-    Logger.recordOutput(
-        "HeadingAlign/TargetHeading",
-        targetHeadingRadians);
+    Logger.recordOutput("HeadingAlign/TargetHeading", targetHeadingRadians);
 
-    Logger.recordOutput(
-        "HeadingAlign/Omega",
-        omega);
+    Logger.recordOutput("HeadingAlign/Omega", omega);
 
-    drive(
-        0.0,
-        0.0,
-        omega,
-        true);
+    drive(0.0, 0.0, omega, true);
   }
 
   /**
-   * Automatically rotates the robot toward a target while allowing
-   * field-relative translation.
+   * Automatically rotates the robot toward a target while allowing field-relative translation.
    *
    * @param translationSupplier supplies field-relative X/Y translation
    * @param targetHeading desired field-relative robot heading
    */
   public void autoAlignHeading(
-      Supplier<Translation2d> translationSupplier,
-      Rotation2d targetHeading) {
+      Supplier<Translation2d> translationSupplier, Rotation2d targetHeading) {
 
-    Translation2d translation =
-        translationSupplier.get();
+    Translation2d translation = translationSupplier.get();
 
-    double currentHeading =
-        getOdometryRotation2d().getRadians();
+    double currentHeading = getOdometryRotation2d().getRadians();
 
-    double targetHeadingRadians =
-        targetHeading.getRadians();
+    double targetHeadingRadians = targetHeading.getRadians();
 
-    double omega =
-        headingController.calculate(
-            currentHeading,
-            targetHeadingRadians);
+    double omega = headingController.calculate(currentHeading, targetHeadingRadians);
 
-    Logger.recordOutput(
-        "HeadingAlign/CurrentHeading",
-        currentHeading);
+    Logger.recordOutput("HeadingAlign/CurrentHeading", currentHeading);
 
-    Logger.recordOutput(
-        "HeadingAlign/TargetHeading",
-        targetHeadingRadians);
+    Logger.recordOutput("HeadingAlign/TargetHeading", targetHeadingRadians);
 
-    Logger.recordOutput(
-        "HeadingAlign/Omega",
-        omega);
+    Logger.recordOutput("HeadingAlign/Omega", omega);
 
-    drive(
-        translation.getX(),
-        translation.getY(),
-        omega,
-        true);
+    drive(translation.getX(), translation.getY(), omega, true);
   }
 
   /**
    * Rotates the robot so that its chassis points directly at a field position.
    *
-   * <p>This is useful for things such as aiming at the hub, source, or another
-   * field element.
+   * <p>This is useful for things such as aiming at the hub, source, or another field element.
    *
    * @param targetPosition field-relative position to point the robot toward
    */
-  public void autoAlignToPoint(
-      Translation2d targetPosition) {
+  public void autoAlignToPoint(Translation2d targetPosition) {
 
-    Translation2d robotPosition =
-        getEstimatedPose().getTranslation();
+    Translation2d robotPosition = getEstimatedPose().getTranslation();
 
-    Translation2d robotToTarget =
-        targetPosition.minus(robotPosition);
+    Translation2d robotToTarget = targetPosition.minus(robotPosition);
 
     if (robotToTarget.getNorm() < 0.001) {
       drive(0.0, 0.0, 0.0, true);
       return;
     }
 
-    Rotation2d targetHeading =
-        robotToTarget.getAngle();
+    Rotation2d targetHeading = robotToTarget.getAngle();
 
     autoAlignHeading(targetHeading);
   }
 
   /**
-   * Rotates toward a field position while allowing the driver
-   * to control field-relative translation.
+   * Rotates toward a field position while allowing the driver to control field-relative
+   * translation.
    *
    * @param translationSupplier driver translation supplier
    * @param targetPosition field-relative position to face
    */
   public void autoAlignToPoint(
-      Supplier<Translation2d> translationSupplier,
-      Translation2d targetPosition) {
+      Supplier<Translation2d> translationSupplier, Translation2d targetPosition) {
 
-    Translation2d robotPosition =
-        getEstimatedPose().getTranslation();
+    Translation2d robotPosition = getEstimatedPose().getTranslation();
 
-    Translation2d robotToTarget =
-        targetPosition.minus(robotPosition);
+    Translation2d robotToTarget = targetPosition.minus(robotPosition);
 
     if (robotToTarget.getNorm() < 0.001) {
-      Translation2d translation =
-          translationSupplier.get();
+      Translation2d translation = translationSupplier.get();
 
-      drive(
-          translation.getX(),
-          translation.getY(),
-          0.0,
-          true);
+      drive(translation.getX(), translation.getY(), 0.0, true);
 
       return;
     }
 
-    Rotation2d targetHeading =
-        robotToTarget.getAngle();
+    Rotation2d targetHeading = robotToTarget.getAngle();
 
-    autoAlignHeading(
-        translationSupplier,
-        targetHeading);
+    autoAlignHeading(translationSupplier, targetHeading);
   }
 
   /**
@@ -452,11 +371,7 @@ public class SwerveDrive extends SubsystemBase {
    * @param omegaSpeed angular speed
    */
   public void runWheelRadiusCharacterization(double omegaSpeed) {
-    drive(
-        0,
-        0,
-        omegaSpeed,
-        false);
+    drive(0, 0, omegaSpeed, false);
   }
 
   /**
@@ -466,12 +381,10 @@ public class SwerveDrive extends SubsystemBase {
    */
   public double[] getWheelRadiusCharacterizationPosition() {
 
-    double[] wheelPositions =
-        new double[swerveModules.length];
+    double[] wheelPositions = new double[swerveModules.length];
 
     for (int i = 0; i < 4; i++) {
-      wheelPositions[i] =
-          swerveModules[i].getDrivePositionRadians();
+      wheelPositions[i] = swerveModules[i].getDrivePositionRadians();
     }
 
     return wheelPositions;
@@ -498,8 +411,7 @@ public class SwerveDrive extends SubsystemBase {
    *
    * @param sample trajectory sample
    */
-  public void followSwerveSample(
-      SwerveSample sample) {
+  public void followSwerveSample(SwerveSample sample) {
 
     xChoreoController.reset();
     yChoreoController.reset();
@@ -507,52 +419,28 @@ public class SwerveDrive extends SubsystemBase {
 
     ChassisSpeeds chassisSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            sample.vx
-                + xChoreoController.calculate(
-                    getEstimatedPose().getX(),
-                    sample.x),
-
-            sample.vy
-                + yChoreoController.calculate(
-                    getEstimatedPose().getY(),
-                    sample.y),
-
+            sample.vx + xChoreoController.calculate(getEstimatedPose().getX(), sample.x),
+            sample.vy + yChoreoController.calculate(getEstimatedPose().getY(), sample.y),
             sample.omega
                 + rotationChoreoController.calculate(
-                    getOdometryRotation2d().getRadians(),
-                    sample.heading),
-
+                    getOdometryRotation2d().getRadians(), sample.heading),
             getOdometryRotation2d());
 
-    Logger.recordOutput(
-        "Trajectories/CurrentX",
-        getEstimatedPose().getX());
+    Logger.recordOutput("Trajectories/CurrentX", getEstimatedPose().getX());
 
-    Logger.recordOutput(
-        "Trajectories/DesiredX",
-        sample.x);
+    Logger.recordOutput("Trajectories/DesiredX", sample.x);
 
-    Logger.recordOutput(
-        "Trajectories/vx",
-        sample.vx);
+    Logger.recordOutput("Trajectories/vx", sample.vx);
 
-    Logger.recordOutput(
-        "Trajectories/omega",
-        sample.omega);
+    Logger.recordOutput("Trajectories/omega", sample.omega);
 
     Logger.recordOutput(
         "Trajectories/headingOutput",
-        rotationChoreoController.calculate(
-            getOdometryRotation2d().getRadians(),
-            sample.heading));
+        rotationChoreoController.calculate(getOdometryRotation2d().getRadians(), sample.heading));
 
-    Logger.recordOutput(
-        "Trajectories/desiredHeading",
-        sample.heading);
+    Logger.recordOutput("Trajectories/desiredHeading", sample.heading);
 
-    drive(
-        chassisSpeeds.unaryMinus(),
-        false);
+    drive(chassisSpeeds.unaryMinus(), false);
   }
 
   /** Runs all SwerveModule periodic methods. */
@@ -568,8 +456,7 @@ public class SwerveDrive extends SubsystemBase {
    * @param speeds chassis speeds
    * @return whether all chassis speeds are zero
    */
-  public boolean getZeroedSpeeds(
-      ChassisSpeeds speeds) {
+  public boolean getZeroedSpeeds(ChassisSpeeds speeds) {
 
     return speeds.vxMetersPerSecond == 0
         && speeds.vyMetersPerSecond == 0
@@ -618,8 +505,7 @@ public class SwerveDrive extends SubsystemBase {
    * @return gyro rotation
    */
   public Rotation2d getGyroRotation2d() {
-    return Rotation2d.fromDegrees(
-        getHeading());
+    return Rotation2d.fromDegrees(getHeading());
   }
 
   /**
@@ -628,9 +514,7 @@ public class SwerveDrive extends SubsystemBase {
    * @return alliance-relative gyro heading
    */
   public Rotation2d getGyroFieldRelativeRotation2d() {
-    return Rotation2d.fromDegrees(
-        getHeading()
-            + getAllianceAngleOffset());
+    return Rotation2d.fromDegrees(getHeading() + getAllianceAngleOffset());
   }
 
   /**
@@ -640,19 +524,12 @@ public class SwerveDrive extends SubsystemBase {
    */
   public double getAllianceAngleOffset() {
 
-    alliance =
-        DriverStation.getAlliance();
+    alliance = DriverStation.getAlliance();
 
-    return alliance.isPresent()
-            && alliance.get()
-                == DriverStation.Alliance.Red
-        ? 180.0
-        : 0.0;
+    return alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red ? 180.0 : 0.0;
   }
 
-  /**
-   * Resets gyro heading.
-   */
+  /** Resets gyro heading. */
   public void zeroHeading() {
     gyroIO.reset();
   }
@@ -682,11 +559,7 @@ public class SwerveDrive extends SubsystemBase {
    * @return alliance-relative odometry heading
    */
   public Rotation2d getOdometryAllianceRelativeRotation2d() {
-    return getEstimatedPose()
-        .getRotation()
-        .plus(
-            Rotation2d.fromDegrees(
-                getAllianceAngleOffset()));
+    return getEstimatedPose().getRotation().plus(Rotation2d.fromDegrees(getAllianceAngleOffset()));
   }
 
   /**
@@ -694,66 +567,48 @@ public class SwerveDrive extends SubsystemBase {
    *
    * @param desiredStates desired module states
    */
-  public void setModuleStates(
-      SwerveModuleState[] desiredStates) {
+  public void setModuleStates(SwerveModuleState[] desiredStates) {
 
     for (int i = 0; i < 4; i++) {
-      swerveModules[i]
-          .setOptimizedDesiredState(
-              desiredStates[i]);
+      swerveModules[i].setOptimizedDesiredState(desiredStates[i]);
     }
   }
 
   /** Sets the modules into an X stance. */
   public void setXStance() {
 
-    Rotation2d[] swerveHeadings =
-        new Rotation2d[swerveModules.length];
+    Rotation2d[] swerveHeadings = new Rotation2d[swerveModules.length];
 
     for (int i = 0; i < 4; i++) {
-      swerveHeadings[i] =
-          Rotation2d.fromDegrees(45);
+      swerveHeadings[i] = Rotation2d.fromDegrees(45);
     }
 
-    DriveConstants.DRIVE_KINEMATICS
-        .resetHeadings(swerveHeadings);
+    DriveConstants.DRIVE_KINEMATICS.resetHeadings(swerveHeadings);
 
     for (int i = 0; i < 4; i++) {
       swerveModules[i].stopModule();
     }
   }
 
-  /**
-   * Updates pose estimation using swerve measurements.
-   */
+  /** Updates pose estimation using swerve measurements. */
   public void addPoseEstimatorSwerveMeasurement() {
 
-    final SwerveModulePosition[] modulePositions =
-        getModulePositions();
+    final SwerveModulePosition[] modulePositions = getModulePositions();
 
-    final SwerveModulePosition[] moduleDeltas =
-        getModulesDelta(modulePositions);
+    final SwerveModulePosition[] moduleDeltas = getModulesDelta(modulePositions);
 
     if (gyroInputs.isConnected) {
 
-      rawGyroRotation =
-          getGyroRotation2d();
+      rawGyroRotation = getGyroRotation2d();
 
     } else {
 
-      Twist2d twist =
-          DriveConstants.DRIVE_KINEMATICS
-              .toTwist2d(moduleDeltas);
+      Twist2d twist = DriveConstants.DRIVE_KINEMATICS.toTwist2d(moduleDeltas);
 
-      rawGyroRotation =
-          rawGyroRotation.plus(
-              new Rotation2d(twist.dtheta));
+      rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
     }
 
-    poseEstimator.updateWithTime(
-        TimeUtil.getLogTimeSeconds(),
-        rawGyroRotation,
-        modulePositions);
+    poseEstimator.updateWithTime(TimeUtil.getLogTimeSeconds(), rawGyroRotation, modulePositions);
   }
 
   /**
@@ -762,28 +617,20 @@ public class SwerveDrive extends SubsystemBase {
    * @param freshModulesPosition latest positions
    * @return module position deltas
    */
-  private SwerveModulePosition[] getModulesDelta(
-      SwerveModulePosition[] freshModulesPosition) {
+  private SwerveModulePosition[] getModulesDelta(SwerveModulePosition[] freshModulesPosition) {
 
-    SwerveModulePosition[] deltas =
-        new SwerveModulePosition[swerveModules.length];
+    SwerveModulePosition[] deltas = new SwerveModulePosition[swerveModules.length];
 
-    for (int moduleIndex = 0;
-        moduleIndex < 4;
-        moduleIndex++) {
+    for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
 
       final double deltaDistanceMeters =
           freshModulesPosition[moduleIndex].distanceMeters
-              - lastModulePositions[moduleIndex]
-                  .distanceMeters;
+              - lastModulePositions[moduleIndex].distanceMeters;
 
       deltas[moduleIndex] =
-          new SwerveModulePosition(
-              deltaDistanceMeters,
-              freshModulesPosition[moduleIndex].angle);
+          new SwerveModulePosition(deltaDistanceMeters, freshModulesPosition[moduleIndex].angle);
 
-      lastModulePositions[moduleIndex] =
-          freshModulesPosition[moduleIndex];
+      lastModulePositions[moduleIndex] = freshModulesPosition[moduleIndex];
     }
 
     return deltas;
@@ -797,13 +644,10 @@ public class SwerveDrive extends SubsystemBase {
   @AutoLogOutput(key = "SwerveStates/Measured")
   private SwerveModuleState[] getModuleStates() {
 
-    SwerveModuleState[] states =
-        new SwerveModuleState[
-            swerveModules.length];
+    SwerveModuleState[] states = new SwerveModuleState[swerveModules.length];
 
     for (int i = 0; i < states.length; i++) {
-      states[i] =
-          swerveModules[i].getMeasuredState();
+      states[i] = swerveModules[i].getMeasuredState();
     }
 
     return states;
@@ -816,13 +660,10 @@ public class SwerveDrive extends SubsystemBase {
    */
   private SwerveModulePosition[] getModulePositions() {
 
-    SwerveModulePosition[] positions =
-        new SwerveModulePosition[
-            swerveModules.length];
+    SwerveModulePosition[] positions = new SwerveModulePosition[swerveModules.length];
 
     for (int i = 0; i < positions.length; i++) {
-      positions[i] =
-          swerveModules[i].getPosition();
+      positions[i] = swerveModules[i].getPosition();
     }
 
     return positions;
@@ -833,13 +674,9 @@ public class SwerveDrive extends SubsystemBase {
    *
    * @param pose new robot pose
    */
-  public void resetEstimatedPose(
-      Pose2d pose) {
+  public void resetEstimatedPose(Pose2d pose) {
 
-    poseEstimator.resetPosition(
-        rawGyroRotation,
-        getModulePositions(),
-        pose);
+    poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
   }
 
   // --------------------------------------------------------------------------
@@ -850,27 +687,20 @@ public class SwerveDrive extends SubsystemBase {
 
     if (AllianceFlipper.isBlue()) {
 
-      return FieldConstants.BLUE_HUB_CENTER
-          .getDistance(
-              poseEstimator
-                  .getEstimatedPosition()
-                  .getTranslation());
+      return FieldConstants.BLUE_HUB_CENTER.getDistance(
+          poseEstimator.getEstimatedPosition().getTranslation());
 
     } else {
 
-      return FieldConstants.RED_HUB_CENTER
-          .getDistance(
-              poseEstimator
-                  .getEstimatedPosition()
-                  .getTranslation());
+      return FieldConstants.RED_HUB_CENTER.getDistance(
+          poseEstimator.getEstimatedPosition().getTranslation());
     }
   }
 
   public double getShootingAngle() {
 
     return Math.atan(
-        (FieldConstants.HUB_HEIGHT_METERS
-                - ShooterConstants.SHOOTER_HEIGHT_FROM_GROUND)
+        (FieldConstants.HUB_HEIGHT_METERS - ShooterConstants.SHOOTER_HEIGHT_FROM_GROUND)
             / getDistanceFromAllianceHub());
   }
 
@@ -890,18 +720,12 @@ public class SwerveDrive extends SubsystemBase {
 
     if (AllianceFlipper.isRed()) {
 
-      return poseEstimator
-              .getEstimatedPosition()
-              .getX()
-          > (FieldConstants.FIELD_WIDTH_METERS
-              - maxX);
+      return poseEstimator.getEstimatedPosition().getX()
+          > (FieldConstants.FIELD_WIDTH_METERS - maxX);
 
     } else {
 
-      return poseEstimator
-              .getEstimatedPosition()
-              .getX()
-          < maxX;
+      return poseEstimator.getEstimatedPosition().getX() < maxX;
     }
   }
 
@@ -912,28 +736,20 @@ public class SwerveDrive extends SubsystemBase {
    *
    * @param translationalControlSupplier driver translation supplier
    */
-  public void sourceAlign(
-      Supplier<Translation2d> translationalControlSupplier) {
+  public void sourceAlign(Supplier<Translation2d> translationalControlSupplier) {
 
-    double targetAngle =
-        Units.degreesToRadians(54);
+    double targetAngle = Units.degreesToRadians(54);
 
     if (AllianceFlipper.isRed()) {
-      targetAngle =
-          Math.PI - targetAngle;
+      targetAngle = Math.PI - targetAngle;
     }
 
-    if (poseEstimator
-            .getEstimatedPosition()
-            .getY()
-        > FieldConstants.FIELD_WIDTH_METERS / 2) {
+    if (poseEstimator.getEstimatedPosition().getY() > FieldConstants.FIELD_WIDTH_METERS / 2) {
 
       targetAngle *= -1;
     }
 
-    autoAlignHeading(
-        translationalControlSupplier,
-        Rotation2d.fromRadians(targetAngle));
+    autoAlignHeading(translationalControlSupplier, Rotation2d.fromRadians(targetAngle));
   }
 
   // --------------------------------------------------------------------------
@@ -945,12 +761,9 @@ public class SwerveDrive extends SubsystemBase {
    *
    * @param goal desired pose
    */
-  public void followRepulsorField(
-      Pose2d goal) {
+  public void followRepulsorField(Pose2d goal) {
 
-    followRepulsorField(
-        goal,
-        null);
+    followRepulsorField(goal, null);
   }
 
   /**
@@ -959,95 +772,47 @@ public class SwerveDrive extends SubsystemBase {
    * @param goal desired pose
    * @param nudgeSupplier optional nudge supplier
    */
-  public void followRepulsorField(
-      Pose2d goal,
-      Supplier<Translation2d> nudgeSupplier) {
+  public void followRepulsorField(Pose2d goal, Supplier<Translation2d> nudgeSupplier) {
 
-    repulsorFieldPlanner.setGoal(
-        goal.getTranslation());
+    repulsorFieldPlanner.setGoal(goal.getTranslation());
 
-    xRepulsorController.reset(
-        poseEstimator
-            .getEstimatedPosition()
-            .getX());
+    xRepulsorController.reset(poseEstimator.getEstimatedPosition().getX());
 
-    yRepulsorController.reset(
-        poseEstimator
-            .getEstimatedPosition()
-            .getY());
+    yRepulsorController.reset(poseEstimator.getEstimatedPosition().getY());
 
-    headingController.reset(
-        poseEstimator
-            .getEstimatedPosition()
-            .getRotation()
-            .getRadians());
+    headingController.reset(poseEstimator.getEstimatedPosition().getRotation().getRadians());
 
-    Logger.recordOutput(
-        "Repulsor/Goal",
-        goal);
+    Logger.recordOutput("Repulsor/Goal", goal);
 
     ChassisSpeeds feedback =
         new ChassisSpeeds(
-
-            xRepulsorController.calculate(
-                poseEstimator
-                    .getEstimatedPosition()
-                    .getX(),
-                goal.getX()),
-
-            yRepulsorController.calculate(
-                poseEstimator
-                    .getEstimatedPosition()
-                    .getY(),
-                goal.getY()),
-
+            xRepulsorController.calculate(poseEstimator.getEstimatedPosition().getX(), goal.getX()),
+            yRepulsorController.calculate(poseEstimator.getEstimatedPosition().getY(), goal.getY()),
             headingController.calculate(
-                poseEstimator
-                    .getEstimatedPosition()
-                    .getRotation()
-                    .getRadians(),
-                goal.getRotation()
-                    .getRadians()));
+                poseEstimator.getEstimatedPosition().getRotation().getRadians(),
+                goal.getRotation().getRadians()));
 
-    Transform2d error =
-        goal.minus(
-            poseEstimator
-                .getEstimatedPosition());
+    Transform2d error = goal.minus(poseEstimator.getEstimatedPosition());
 
-    Logger.recordOutput(
-        "Repulsor/Error",
-        error);
+    Logger.recordOutput("Repulsor/Error", error);
 
-    Logger.recordOutput(
-        "Repulsor/Feedback",
-        feedback);
+    Logger.recordOutput("Repulsor/Feedback", feedback);
 
-    ChassisSpeeds outputFieldRelative =
-        feedback;
+    ChassisSpeeds outputFieldRelative = feedback;
 
     if (nudgeSupplier != null) {
 
-      Translation2d nudge =
-          nudgeSupplier.get();
+      Translation2d nudge = nudgeSupplier.get();
 
       if (nudge.getNorm() > 0.1) {
 
         double nudgeScalar =
-            Math.min(
-                    error.getTranslation().getNorm()
-                        / 3,
-                    1)
-                * Math.min(
-                    error.getTranslation().getNorm()
-                        / 3,
-                    1)
+            Math.min(error.getTranslation().getNorm() / 3, 1)
+                * Math.min(error.getTranslation().getNorm() / 3, 1)
                 * DriveConstants.MAX_SPEED_METERS_PER_SECOND;
 
         if (AllianceFlipper.isRed()) {
-          nudge =
-              new Translation2d(
-                  -nudge.getX(),
-                  -nudge.getY());
+          nudge = new Translation2d(-nudge.getX(), -nudge.getY());
         }
 
         nudgeScalar *=
@@ -1056,30 +821,21 @@ public class SwerveDrive extends SubsystemBase {
                     .getAngle()
                     .minus(
                         new Rotation2d(
-                            outputFieldRelative
-                                .vxMetersPerSecond,
-                            outputFieldRelative
-                                .vyMetersPerSecond))
+                            outputFieldRelative.vxMetersPerSecond,
+                            outputFieldRelative.vyMetersPerSecond))
                     .getSin());
 
-        outputFieldRelative.vxMetersPerSecond +=
-            nudge.getX() * nudgeScalar;
+        outputFieldRelative.vxMetersPerSecond += nudge.getX() * nudgeScalar;
 
-        outputFieldRelative.vyMetersPerSecond +=
-            nudge.getY() * nudgeScalar;
+        outputFieldRelative.vyMetersPerSecond += nudge.getY() * nudgeScalar;
       }
     }
 
     ChassisSpeeds outputRobotRelative =
         ChassisSpeeds.fromFieldRelativeSpeeds(
-            outputFieldRelative,
-            poseEstimator
-                .getEstimatedPosition()
-                .getRotation());
+            outputFieldRelative, poseEstimator.getEstimatedPosition().getRotation());
 
-    drive(
-        outputRobotRelative.unaryMinus(),
-        false);
+    drive(outputRobotRelative.unaryMinus(), false);
   }
 
   // --------------------------------------------------------------------------
@@ -1093,12 +849,9 @@ public class SwerveDrive extends SubsystemBase {
    * @param currentTimeStampSeconds timestamp
    */
   public void addPoseEstimatorVisionMeasurement(
-      Pose2d visionMeasurement,
-      double currentTimeStampSeconds) {
+      Pose2d visionMeasurement, double currentTimeStampSeconds) {
 
-    poseEstimator.addVisionMeasurement(
-        visionMeasurement,
-        currentTimeStampSeconds);
+    poseEstimator.addVisionMeasurement(visionMeasurement, currentTimeStampSeconds);
   }
 
   /**
@@ -1109,15 +862,10 @@ public class SwerveDrive extends SubsystemBase {
    * @param thetaStandardDeviation heading standard deviation
    */
   public void setPoseEstimatorVisionConfidence(
-      double xStandardDeviation,
-      double yStandardDeviation,
-      double thetaStandardDeviation) {
+      double xStandardDeviation, double yStandardDeviation, double thetaStandardDeviation) {
 
     poseEstimator.setVisionMeasurementStdDevs(
-        VecBuilder.fill(
-            xStandardDeviation,
-            yStandardDeviation,
-            thetaStandardDeviation));
+        VecBuilder.fill(xStandardDeviation, yStandardDeviation, thetaStandardDeviation));
   }
 
   // --------------------------------------------------------------------------
@@ -1133,15 +881,10 @@ public class SwerveDrive extends SubsystemBase {
 
     gyroIO.updateInputs(gyroInputs);
 
-    Logger.processInputs(
-        "Drive/Gyro",
-        gyroInputs);
+    Logger.processInputs("Drive/Gyro", gyroInputs);
 
-    Tracer.traceFunc(
-        "Gyro",
-        () -> gyroIO.updateInputs(gyroInputs));
+    Tracer.traceFunc("Gyro", () -> gyroIO.updateInputs(gyroInputs));
 
-    gyroDisconnectedAlert.set(
-        !gyroInputs.isConnected);
+    gyroDisconnectedAlert.set(!gyroInputs.isConnected);
   }
 }

@@ -44,7 +44,7 @@ public final class VisionConstants {
     public static Limelight fromId(int id) {
       return switch (id) {
         case 0 -> FRONT;
-        // case 1 -> SIDE;
+          // case 1 -> SIDE;
         default -> throw new IllegalArgumentException("Invalid Limelight ID: " + id);
       };
     }

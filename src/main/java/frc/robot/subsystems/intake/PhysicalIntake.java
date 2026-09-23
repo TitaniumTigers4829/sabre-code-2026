@@ -5,7 +5,6 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -21,14 +20,14 @@ import frc.robot.Constants.HardwareConstants;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class PhysicalIntake implements IntakeInterface {
-  private TalonFX intakeMotorOuter = new TalonFX(IntakeConstants.INTAKE_MOTOR_1_ID);
-  private TalonFX intakeMotorInside = new TalonFX(IntakeConstants.INTAKE_MOTOR_2_ID);
+  // private TalonFX intakeMotorOuter = new TalonFX(IntakeConstants.INTAKE_MOTOR_1_ID);
+  // private TalonFX intakeMotorInside = new TalonFX(IntakeConstants.INTAKE_MOTOR_2_ID);
   private TalonFX intakePivotMotorRight =
       new TalonFX(IntakeConstants.PIVOT_MOTOR_RIGHT_ID, HardwareConstants.RIO_CAN_BUS_STRING);
   // private TalonFX intakePivotMotorLeft = new TalonFX(IntakeConstants.PIVOT_MOTOR_LEFT_ID);
 
-  private final CANcoder pivotEncoder =
-      new CANcoder(IntakeConstants.CANCODER_ID, HardwareConstants.RIO_CAN_BUS_STRING);
+  // private final CANcoder pivotEncoder =
+  // new CANcoder(IntakeConstants.CANCODER_ID, HardwareConstants.RIO_CAN_BUS_STRING);
 
   private MotionMagicVoltage request = new MotionMagicVoltage(0.0);
   // private MotorAlignmentValue pivotMotorAlignment = MotorAlignmentValue.Opposed;
@@ -49,7 +48,7 @@ public class PhysicalIntake implements IntakeInterface {
     encoderConfig.MagnetSensor.MagnetOffset = -IntakeConstants.ZERO_ANGLE;
     encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
     encoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
-    pivotEncoder.getConfigurator().apply(encoderConfig, HardwareConstants.TIMEOUT_SECONDS);
+    // pivotEncoder.getConfigurator().apply(encoderConfig, HardwareConstants.TIMEOUT_SECONDS);
 
     intakeOuterConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     intakeOuterConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
@@ -89,7 +88,7 @@ public class PhysicalIntake implements IntakeInterface {
     pivotConfig.Slot0.kG = IntakeConstants.PIVOT_G;
     pivotConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
     pivotConfig.Feedback.SensorToMechanismRatio = IntakeConstants.GEAR_RATIO;
-    pivotConfig.Feedback.FeedbackRemoteSensorID = pivotEncoder.getDeviceID();
+    // pivotConfig.Feedback.FeedbackRemoteSensorID = pivotEncoder.getDeviceID();
     pivotConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
 
     pivotConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.OUTER_STATOR_CURRENT_LIMIT;
@@ -105,25 +104,24 @@ public class PhysicalIntake implements IntakeInterface {
     pivotConfig.MotionMagic.MotionMagicAcceleration = 5.0;
     pivotConfig.MotionMagic.MotionMagicCruiseVelocity = 2.5;
 
-    intakeMotorOuter.getConfigurator().apply(intakeOuterConfig);
-    intakeMotorInside.getConfigurator().apply(intakeInnerConfig);
+    // intakeMotorOuter.getConfigurator().apply(intakeOuterConfig);
+    // intakeMotorInside.getConfigurator().apply(intakeInnerConfig);
     intakePivotMotorRight.getConfigurator().apply(pivotConfig);
 
     // pivotConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     // intakePivotMotorLeft.getConfigurator().apply(pivotConfig);
 
-    intakeAngle = pivotEncoder.getPosition();
+    // intakeAngle = pivotEncoder.getPosition();
     intakePivotSpeed = intakePivotMotorRight.getVelocity();
 
     // pivotEncoder.setPosition(pivotEncoder.getAbsolutePosition().getValueAsDouble());
-    pivotEncoder.setPosition(0);
+    // pivotEncoder.setPosition(0);
     // intakePivotMotorRight.setPosition(0.0);
     // intakePivotMotorLeft.setPosition(0.0);
 
     BaseStatusSignal.setUpdateFrequencyForAll(100.0, intakeAngle, intakePivotSpeed);
-    ParentDevice.optimizeBusUtilizationForAll(
-        intakeMotorOuter, intakeMotorInside, intakePivotMotorRight); // intakePivotMotorLeft
+    ParentDevice.optimizeBusUtilizationForAll(intakePivotMotorRight); // intakePivotMotorLeft
   }
 
   public void updateInputs(IntakeInputs inputs) {
@@ -145,18 +143,18 @@ public class PhysicalIntake implements IntakeInterface {
   }
 
   public void intakeFuel() {
-    intakeMotorOuter.set(IntakeConstants.INTAKE_SPEED_OUTER);
-    intakeMotorInside.set(IntakeConstants.INTAKE_SPEED_INNER);
+    // intakeMotorOuter.set(IntakeConstants.INTAKE_SPEED_OUTER);
+    // intakeMotorInside.set(IntakeConstants.INTAKE_SPEED_INNER);
   }
 
   public void outakeFuel() {
-    intakeMotorOuter.set(-IntakeConstants.INTAKE_SPEED_OUTER);
-    intakeMotorInside.set(-IntakeConstants.INTAKE_SPEED_INNER);
+    // intakeMotorOuter.set(-IntakeConstants.INTAKE_SPEED_OUTER);
+    // intakeMotorInside.set(-IntakeConstants.INTAKE_SPEED_INNER);
   }
 
   public void setSpeed(double speed) {
-    intakeMotorOuter.set(speed);
-    intakeMotorInside.set(speed);
+    // intakeMotorOuter.set(speed);
+    // intakeMotorInside.set(speed);
   }
 
   public void setPivotSpeed(double speed) {
@@ -185,9 +183,9 @@ public class PhysicalIntake implements IntakeInterface {
     return intakeAngle.getValueAsDouble();
   }
 
-  public void zeroAngle() {
-    pivotEncoder.setPosition(0);
-  }
+  // public void zeroAngle() {
+  //   pivotEncoder.setPosition(0);
+  // }
 
   public double getIntakeSpeed() {
     intakePivotSpeed.refresh();

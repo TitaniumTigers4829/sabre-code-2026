@@ -7,17 +7,14 @@ package frc.robot.subsystems.shooter;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Constants.HardwareConstants;
 import frc.robot.extras.logging.LoggedTunableNumber;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
 
@@ -37,13 +34,13 @@ public class PhysicalShooter implements ShooterInterface {
   private final TalonFX topLeftFlywheelMotor =
       new TalonFX(ShooterConstants.TOP_LEFT_FLYWHEEL_MOTOR_ID);
   private final TalonFX bottomLeftFlywheelMotor =
-      new TalonFX(
-          ShooterConstants.BOTTOM_LEFT_FLYWHEEL_MOTOR_ID);
+      new TalonFX(ShooterConstants.BOTTOM_LEFT_FLYWHEEL_MOTOR_ID);
   private final TalonFX topRightFlywheelMotor =
       new TalonFX(ShooterConstants.TOP_RIGHT_FLYWHEEL_MOTOR_ID);
-  private final TalonFX bottomRightFlywheelMotor = new TalonFX(ShooterConstants.BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID);
+  // private final TalonFX bottomRightFlywheelMotor =
+  // new TalonFX(ShooterConstants.BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID);
   private final TalonFX rollerMotor = new TalonFX(ShooterConstants.ROLLER_MOTOR_ID);
-  private final TalonFX rollerMotor2 = new TalonFX(ShooterConstants.ROLLER_MOTOR_2_ID);
+  private final TalonFX rollerFloor = new TalonFX(ShooterConstants.ROLLER_MOTOR_2_ID);
 
   // MotorAlignmentValue motorAlignment = MotorAlignmentValue.Opposed;
 
@@ -97,7 +94,7 @@ public class PhysicalShooter implements ShooterInterface {
     leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     topLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
-    bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    // bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
     // kickerMotor.getConfigurator().apply(leaderFlywheelConfig);
     // leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // spindexerMotor.inve
@@ -113,7 +110,7 @@ public class PhysicalShooter implements ShooterInterface {
 
     rollerMotor.getConfigurator().apply(rollerConfig);
     rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-    rollerMotor2.getConfigurator().apply(rollerConfig);
+    rollerFloor.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
 
@@ -127,10 +124,7 @@ public class PhysicalShooter implements ShooterInterface {
     rollerVelocity.setUpdateFrequency(50);
 
     ParentDevice.optimizeBusUtilizationForAll(
-    topLeftFlywheelMotor, 
-    topRightFlywheelMotor, 
-    bottomLeftFlywheelMotor, 
-    bottomRightFlywheelMotor);
+        topLeftFlywheelMotor, topRightFlywheelMotor, bottomLeftFlywheelMotor);
   }
 
   public void updateInputs(ShooterInputs inputs) {
@@ -151,7 +145,7 @@ public class PhysicalShooter implements ShooterInterface {
     topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
     topRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
     bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
-    bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
+    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
@@ -214,16 +208,17 @@ public class PhysicalShooter implements ShooterInterface {
 
   // UNUSED CUZ JACK IS A CHUD
   public void passFuel() {
-    topRightFlywheelMotor.setControl(rpsRequest.withVelocity(50));
-    topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(50));
-    bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(50));
-    bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(50));
+    topRightFlywheelMotor.set(-0.5);
+    topLeftFlywheelMotor.set(-0.5);
+    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(50));
+    bottomLeftFlywheelMotor.set(-0.5);
+    rollerFloor.set(0.5);
     this.isUpToSpeed =
         Math.abs(50 - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
     // SmartDashboard.putNumber("desiredRPS", desiredSpeed);
     // SmartDashboard.putNumber("currentRPS", currentRPS.refresh().getValueAsDouble());
-    setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+    setRollerSpeed(ShooterConstants.SPINDEXER_SHOOT_SPEED);
 
     SmartDashboard.putNumber("desired rps", 50);
     SmartDashboard.putBoolean("ready to shoot", isUpToSpeed());
@@ -256,17 +251,17 @@ public class PhysicalShooter implements ShooterInterface {
       }
 
       setRollerSpeed(rollerSpeed);
-      setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
     } else {
       setRollerSpeed(0.0);
-      setKickerSpeed(0.0);
+      // setKickerSpeed(0.0);
     }
   }
 
   public void setSpeed(double rps) {
     topRightFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
     topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
-    bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
+    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
     bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(rps));
   }
 
@@ -274,9 +269,11 @@ public class PhysicalShooter implements ShooterInterface {
     topLeftFlywheelMotor.set(0);
     bottomLeftFlywheelMotor.set(0);
     topRightFlywheelMotor.set(0);
-    bottomRightFlywheelMotor.set(0);
+    // bottomRightFlywheelMotor.set(0);
     rollerMotor.set(0);
+    rollerFloor.set(0);
   }
+
   public void setRollerSpeed(double speed) {
     rollerMotor.set(speed);
   }
