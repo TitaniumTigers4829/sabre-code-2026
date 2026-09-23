@@ -15,7 +15,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.extras.logging.LoggedTunableNumber;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
 
 /** Add your docs here. */
@@ -208,10 +207,14 @@ public class PhysicalShooter implements ShooterInterface {
 
   // UNUSED CUZ JACK IS A CHUD
   public void passFuel() {
-    topRightFlywheelMotor.set(-0.5);
-    topLeftFlywheelMotor.set(-0.5);
-    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(50));
-    bottomLeftFlywheelMotor.set(-0.5);
+
+    topRightFlywheelMotor.setControl(
+        rpsRequest.withVelocity(ShooterConstants.FLYWHEEL_STATIC_SPEEED));
+    topLeftFlywheelMotor.setControl(
+        rpsRequest.withVelocity(ShooterConstants.FLYWHEEL_STATIC_SPEEED));
+    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(60));
+    bottomLeftFlywheelMotor.setControl(
+        rpsRequest.withVelocity(ShooterConstants.FLYWHEEL_STATIC_SPEEED));
     rollerFloor.set(0.5);
     this.isUpToSpeed =
         Math.abs(50 - currentRPS.refresh().getValueAsDouble())
