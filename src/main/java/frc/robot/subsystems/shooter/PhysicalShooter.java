@@ -137,14 +137,18 @@ public class PhysicalShooter implements ShooterInterface {
     return currentRPS.getValueAsDouble();
   }
 
+  public void setStaticSpeed(double speedRps) {
+    topRightFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+    topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(60));
+    bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+  }
+
   // test
   public void setPercentOutput(double distance, boolean useOneMotor) {
     double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
     // double desiredSpeed = flywheelRPS.get();
-    topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
-    topRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
-    bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
-    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(desiredSpeed));
+    setStaticSpeed(desiredSpeed);
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
@@ -207,14 +211,7 @@ public class PhysicalShooter implements ShooterInterface {
 
   // UNUSED CUZ JACK IS A CHUD
   public void passFuel() {
-
-    topRightFlywheelMotor.setControl(
-        rpsRequest.withVelocity(ShooterConstants.FLYWHEEL_STATIC_SPEEED));
-    topLeftFlywheelMotor.setControl(
-        rpsRequest.withVelocity(ShooterConstants.FLYWHEEL_STATIC_SPEEED));
-    // bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(60));
-    bottomLeftFlywheelMotor.setControl(
-        rpsRequest.withVelocity(ShooterConstants.FLYWHEEL_STATIC_SPEEED));
+    setStaticSpeed(50);
     rollerFloor.set(0.5);
     this.isUpToSpeed =
         Math.abs(50 - currentRPS.refresh().getValueAsDouble())

@@ -45,6 +45,8 @@ public interface ShooterInterface extends Subsystem {
 
   public default void stopShoot() {}
 
+  public default void setStaticSpeed(double speedRps) {}
+
   public default void openLoop(double output) {}
 
   public default void setPID(double kP, double kI, double kD) {}

@@ -109,6 +109,7 @@ public class DumperShootCommand extends Command {
     targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
     Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
+    // UNTESTED. PLEASE TEST OR THE ROBOT MAY KILL YOU.
     drive.autoAlignHeading(desiredHeading);
 
     distance = offsettedTarget.getTranslation().getDistance(turretPose);

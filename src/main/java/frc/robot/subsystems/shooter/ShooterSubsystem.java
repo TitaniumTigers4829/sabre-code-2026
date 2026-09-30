@@ -68,6 +68,10 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterInterface.stopShoot();
   }
 
+  public void setStaticSpeed(double speedRps) {
+    shooterInterface.setStaticSpeed(speedRps);
+  }
+
   public void setPercentOutput(double distance, boolean useOneMotor) {
     shooterInterface.setPercentOutput(distance, useOneMotor);
   }
