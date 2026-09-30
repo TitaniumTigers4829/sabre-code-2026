@@ -1,4 +1,4 @@
-package frc.robot.commands.shooter;
+package frc.robot.commands.hublocking;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;

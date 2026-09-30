@@ -12,11 +12,18 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.HardwareConstants;
 import frc.robot.commands.drive.DriveCommand;
+import frc.robot.commands.hublocking.DumperShootCommand;
+import frc.robot.commands.hublocking.ShootWhileMove;
+import frc.robot.commands.intake.IntakeCommand;
+import frc.robot.commands.intake.IntakePivotBounceHigher;
+import frc.robot.commands.intake.IntakePivotBounceLower;
+import frc.robot.commands.intake.IntakePivotDownCommand;
+import frc.robot.commands.intake.IntakePivotUpCommand;
+import frc.robot.commands.intake.MoveIntakeUpCommand;
 import frc.robot.commands.intake.ReverseKickerAndRollers;
-// import frc.robot.commands.intake.ReverseSpindexerCommand;
-import frc.robot.commands.shooter.DumperShootCommand;
 import frc.robot.commands.shooter.DumperStaticShootCommand;
 import frc.robot.extras.util.JoystickUtil;
+import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.shooter.PhysicalShooter;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveConstants;
@@ -48,7 +55,7 @@ public class Robot extends LoggedRobot {
   private SwerveDrive swerveDrive;
   private VisionSubsystem visionSubsystem;
   private ShooterSubsystem shooterSubsystem;
-  // private IntakeSubsystem intakeSubsystem;
+  private IntakeSubsystem intakeSubsystem;
 
   private Autos autos;
   private Command autoCommand;
@@ -195,22 +202,25 @@ public class Robot extends LoggedRobot {
                             swerveDrive.getEstimatedPose().getY(),
                             Rotation2d.fromDegrees(swerveDrive.getAllianceAngleOffset())))));
 
-    driverController
-        .b()
-        .whileTrue(
-            new DumperShootCommand(
-                swerveDrive, shooterSubsystem, () -> operatorController.povDown().getAsBoolean()));
+    
     // driverController.a().whileTrue(new DefenseCommand(intakeSubsystem));
     // driverController.b().whileTrue(new ReverseSpindexerCommand(shooterSubsystem));
     driverController.leftTrigger().whileTrue(new ReverseKickerAndRollers(shooterSubsystem));
 
+    driverController
+        .rightTrigger()
+        .whileTrue(
+            new DumperShootCommand(
+                swerveDrive, shooterSubsystem, () -> operatorController.povDown().getAsBoolean()));
+    driverController.b().whileTrue(new ShootWhileMove(swerveDrive, shooterSubsystem));
+    driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
     // driverController
     //     .leftTrigger()
     //     .whileTrue(
     //         new HubLockCommand(swerveDrive, visionSubsystem, hoodSubsystem, turretSubsystem));
     // driverController.leftTrigger().whileTrue(new ReverseRollerFloor(shooterSubsystem));
 
-    driverController.rightTrigger().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
+    // driverController.rightTrigger().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
   }
 
   /** Configures the operator controller buttons and axes to control the robot */
@@ -220,15 +230,16 @@ public class Robot extends LoggedRobot {
     .leftTrigger()
     .whileTrue(new OuttakeCommand(intakeSubsystem, shooterSubsystem));*/
 
-    // operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
-    // operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
-    // operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
-    // operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
-    // operatorController.b().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
+    
+    operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
+    operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
+    operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
+    operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
+    operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
 
-    // operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
+    operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
 
-    // operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
+    operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
   }
 
   /** Checks the git status and records it to the log */

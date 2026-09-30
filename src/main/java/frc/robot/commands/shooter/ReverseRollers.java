@@ -9,10 +9,10 @@ import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class ReverseRollerFloor extends Command {
+public class ReverseRollers extends Command {
   ShooterSubsystem shooterSubsystem;
 
-  public ReverseRollerFloor(ShooterSubsystem shooterSubsystem) {
+  public ReverseRollers(ShooterSubsystem shooterSubsystem) {
     this.shooterSubsystem = shooterSubsystem;
     addRequirements(shooterSubsystem);
   }

@@ -198,7 +198,7 @@ public class PhysicalShooter implements ShooterInterface {
       }
 
       setRollerSpeed(rollerSpeed);
-      setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
     } else {
       // setRollerSpeed(0.0);
       // setKickerSpeed(0.0);
@@ -276,6 +276,7 @@ public class PhysicalShooter implements ShooterInterface {
 
   public void setRollerSpeed(double speed) {
     rollerMotor.set(speed);
+    rollerFloor.set(speed);
   }
 
   // public void setKickerSpeed(double speed) {
