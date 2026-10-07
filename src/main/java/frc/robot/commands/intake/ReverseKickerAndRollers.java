@@ -25,14 +25,14 @@ public class ReverseKickerAndRollers extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    shooter.setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
+    // shooter.setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
     shooter.setRollerSpeed(-ShooterConstants.SPINDEXER_INTAKE_SPEED);
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    shooter.setKickerSpeed(0);
+    // shooter.setKickerSpeed(0);
     shooter.setRollerSpeed(0);
   }
 

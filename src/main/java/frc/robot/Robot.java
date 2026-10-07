@@ -14,12 +14,6 @@ import frc.robot.Constants.HardwareConstants;
 import frc.robot.commands.drive.DriveCommand;
 import frc.robot.commands.hublocking.DumperShootCommand;
 import frc.robot.commands.hublocking.ShootWhileMove;
-import frc.robot.commands.intake.IntakeCommand;
-import frc.robot.commands.intake.IntakePivotBounceHigher;
-import frc.robot.commands.intake.IntakePivotBounceLower;
-import frc.robot.commands.intake.IntakePivotDownCommand;
-import frc.robot.commands.intake.IntakePivotUpCommand;
-import frc.robot.commands.intake.MoveIntakeUpCommand;
 import frc.robot.commands.intake.ReverseKickerAndRollers;
 import frc.robot.commands.shooter.DumperStaticShootCommand;
 import frc.robot.extras.util.JoystickUtil;
@@ -202,16 +196,13 @@ public class Robot extends LoggedRobot {
                             swerveDrive.getEstimatedPose().getY(),
                             Rotation2d.fromDegrees(swerveDrive.getAllianceAngleOffset())))));
 
-    
     // driverController.a().whileTrue(new DefenseCommand(intakeSubsystem));
     // driverController.b().whileTrue(new ReverseSpindexerCommand(shooterSubsystem));
     driverController.leftTrigger().whileTrue(new ReverseKickerAndRollers(shooterSubsystem));
 
     driverController
         .rightTrigger()
-        .whileTrue(
-            new DumperShootCommand(
-                swerveDrive, shooterSubsystem, () -> operatorController.povDown().getAsBoolean()));
+        .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
     driverController.b().whileTrue(new ShootWhileMove(swerveDrive, shooterSubsystem));
     driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
     // driverController
@@ -230,16 +221,15 @@ public class Robot extends LoggedRobot {
     .leftTrigger()
     .whileTrue(new OuttakeCommand(intakeSubsystem, shooterSubsystem));*/
 
-    
-    operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
-    operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
-    operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
-    operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
-    operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
+    // operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
+    // operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
+    // operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
+    // operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
+    // operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
 
-    operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
+    // operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
 
-    operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
+    // operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
   }
 
   /** Checks the git status and records it to the log */

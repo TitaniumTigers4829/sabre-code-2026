@@ -10,12 +10,12 @@ public class ShooterConstants {
   public static int TOP_LEFT_FLYWHEEL_MOTOR_ID = 61;
   public static int BOTTOM_LEFT_FLYWHEEL_MOTOR_ID = 57;
   public static int TOP_RIGHT_FLYWHEEL_MOTOR_ID = 18;
-  // public static int BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID = 47;
+  public static int BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID = 47;
   public static int ROLLER_MOTOR_ID = 27;
   public static int ROLLER_MOTOR_2_ID = 17;
 
   public static double SHOOTER_HEIGHT_FROM_GROUND = 0;
-  public static double GEAR_RATIO = 0.95;
+  public static double GEAR_RATIO = 1;
 
   public static double FLYWHEEL_S = 0; // 0.2;
   public static double FLYWHEEL_V = 0; // 0.111;
@@ -31,7 +31,7 @@ public class ShooterConstants {
   public static double KICKER_PERCENT_OUTPUT = 1;
   public static double SPINDEXER_INTAKE_SPEED = -1; // 0.675
   public static double SPINDEXER_SHOOT_SPEED = -0.675; // 0.675
-  public static double FLYWHEEL_STATIC_SPEEED = 60;
+  public static double FLYWHEEL_STATIC_SPEED = 60;
 
   // Lookup table for rpms needed for certain distances
   public static double[][] DISTANCE_TO_FLYWHEEL_RPM = {
