@@ -41,6 +41,7 @@ public class PhysicalShooter implements ShooterInterface {
       new TalonFX(ShooterConstants.BOTTOM_RIGHT_FLYWHEEL_MOTOR_ID);
   private final TalonFX rollerMotor = new TalonFX(ShooterConstants.ROLLER_MOTOR_ID);
   private final TalonFX rollerFloor = new TalonFX(ShooterConstants.ROLLER_MOTOR_2_ID);
+  private final TalonFX rightRoller = new TalonFX(ShooterConstants.RIGHT_ROLLER_MOTOR_ID);
 
   // MotorAlignmentValue motorAlignment = MotorAlignmentValue.Opposed;
 
@@ -88,13 +89,13 @@ public class PhysicalShooter implements ShooterInterface {
 
     // TODO: timeouts
     // TODO: unscuff
-    bottomLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
-    topRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    topLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
 
     leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-    topLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
-    bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    bottomLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    topRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
     // kickerMotor.getConfigurator().apply(leaderFlywheelConfig);
     // leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // spindexerMotor.inve
@@ -111,6 +112,7 @@ public class PhysicalShooter implements ShooterInterface {
     rollerMotor.getConfigurator().apply(rollerConfig);
     rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     rollerFloor.getConfigurator().apply(rollerConfig);
+    rightRoller.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
 
@@ -278,6 +280,7 @@ public class PhysicalShooter implements ShooterInterface {
 
   public void setRollerSpeed(double speed) {
     rollerMotor.set(speed);
+    rightRoller.set(speed);
     rollerFloor.set(-speed);
   }
 
