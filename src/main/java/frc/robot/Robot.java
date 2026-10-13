@@ -12,12 +12,12 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.HardwareConstants;
 import frc.robot.commands.drive.DriveCommand;
-import frc.robot.commands.hublocking.DumperShootCommand;
-import frc.robot.commands.hublocking.ShootWhileMove;
-import frc.robot.commands.intake.ReverseKickerAndRollers;
-import frc.robot.commands.shooter.DumperStaticShootCommand;
+import frc.robot.commands.hublocking.*;
+import frc.robot.commands.intake.*;
+import frc.robot.commands.shooter.*;
 import frc.robot.extras.util.JoystickUtil;
 import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.intake.PhysicalIntake;
 import frc.robot.subsystems.shooter.PhysicalShooter;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveConstants;
@@ -200,11 +200,12 @@ public class Robot extends LoggedRobot {
     // driverController.b().whileTrue(new ReverseSpindexerCommand(shooterSubsystem));
     driverController.leftTrigger().whileTrue(new ReverseKickerAndRollers(shooterSubsystem));
 
-    driverController
-        .rightTrigger()
-        .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
+    // driverController
+    //     .rightTrigger()
+    //     .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
     driverController.b().whileTrue(new ShootWhileMove(swerveDrive, shooterSubsystem));
     driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
+    driverController.rightTrigger().whileTrue(new Roller(shooterSubsystem));
     // driverController
     //     .leftTrigger()
     //     .whileTrue(
@@ -217,19 +218,19 @@ public class Robot extends LoggedRobot {
   /** Configures the operator controller buttons and axes to control the robot */
   private void configureOperatorController() {
     // outake also runs kicker backwards
-    /*operatorController
-    .leftTrigger()
-    .whileTrue(new OuttakeCommand(intakeSubsystem, shooterSubsystem));*/
+    operatorController
+        .leftTrigger()
+        .whileTrue(new OuttakeCommand(intakeSubsystem, shooterSubsystem));
 
-    // operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
-    // operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
-    // operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
-    // operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
-    // operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
+    operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
+    operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
+    operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
+    operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
+    operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
 
-    // operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
+    operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
 
-    // operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
+    operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
   }
 
   /** Checks the git status and records it to the log */
@@ -307,7 +308,7 @@ public class Robot extends LoggedRobot {
                 new PhysicalModule(SwerveConstants.compModuleConfigs[3]));
         this.visionSubsystem = new VisionSubsystem(new PhysicalVision() {}); // PhysicalVision
         this.shooterSubsystem = new ShooterSubsystem(new PhysicalShooter());
-        // this.intakeSubsystem = new IntakeSubsystem(new PhysicalIntake());
+        this.intakeSubsystem = new IntakeSubsystem(new PhysicalIntake());
       }
       case DEV_ROBOT -> {
         /* Real robot, instantiate hardware IO implementations */

@@ -78,10 +78,10 @@ public class PhysicalShooter implements ShooterInterface {
     leaderFlywheelConfig.Slot0.kV = ShooterConstants.FLYWHEEL_V;
     leaderFlywheelConfig.Slot0.kA = ShooterConstants.FLYWHEEL_A;
     // TODO: drop down
-    leaderFlywheelConfig.CurrentLimits.StatorCurrentLimit = 120;
+    leaderFlywheelConfig.CurrentLimits.StatorCurrentLimit = 30;
 
     // leaderFlywheelConfig.CurrentLimits.SupplyCurrentLimit = 160;
-    leaderFlywheelConfig.TorqueCurrent.PeakForwardTorqueCurrent = 80;
+    leaderFlywheelConfig.TorqueCurrent.PeakForwardTorqueCurrent = 30;
     leaderFlywheelConfig.TorqueCurrent.PeakReverseTorqueCurrent = 0;
 
     leaderFlywheelConfig.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -89,29 +89,39 @@ public class PhysicalShooter implements ShooterInterface {
 
     // TODO: timeouts
     // TODO: unscuff
-    topLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
-    bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
-
-    leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     bottomLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
     topRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+
+    leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+    topLeftFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+    bottomRightFlywheelMotor.getConfigurator().apply(leaderFlywheelConfig);
+
     // kickerMotor.getConfigurator().apply(leaderFlywheelConfig);
     // leaderFlywheelConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // spindexerMotor.inve
     TalonFXConfiguration rollerConfig = new TalonFXConfiguration();
     // TalonFXConfiguration kickerConfig = new TalonFXConfiguration();
     // TODO: tune
-    rollerConfig.CurrentLimits.StatorCurrentLimit = 60;
+    rollerConfig.CurrentLimits.StatorCurrentLimit = 30;
     rollerConfig.CurrentLimits.SupplyCurrentLimit = 10;
     rollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     rollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     rollerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    rollerConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    rollerConfig.Slot0.kP = ShooterConstants.FLYWHEEL_P;
+    rollerConfig.Slot0.kI = ShooterConstants.FLYWHEEL_I;
+    rollerConfig.Slot0.kD = ShooterConstants.FLYWHEEL_D;
+    rollerConfig.Slot0.kS = ShooterConstants.FLYWHEEL_S;
+    rollerConfig.Slot0.kV = ShooterConstants.FLYWHEEL_V;
+    rollerConfig.Slot0.kA = ShooterConstants.FLYWHEEL_A;
 
     rollerMotor.getConfigurator().apply(rollerConfig);
     rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     rollerFloor.getConfigurator().apply(rollerConfig);
+    rollerConfig.CurrentLimits.StatorCurrentLimit = 40;
+    rollerConfig.CurrentLimits.SupplyCurrentLimit = 20;
     rightRoller.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
@@ -145,8 +155,15 @@ public class PhysicalShooter implements ShooterInterface {
     topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
     bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
     bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
-    rollerMotor.set(ShooterConstants.SPINDEXER_SHOOT_SPEED);
-    rollerFloor.set(0.5);
+    rollerMotor.setControl(rpsRequest.withVelocity(50));
+    rightRoller.setControl(rpsRequest.withVelocity(50));
+    rollerFloor.setControl(rpsRequest.withVelocity(-50));
+  }
+
+  public void setRoller(double speedRps) {
+    rollerMotor.setControl(rpsRequest.withVelocity(50));
+    rightRoller.setControl(rpsRequest.withVelocity(55));
+    rollerFloor.setControl(rpsRequest.withVelocity(-50));
   }
 
   // test
@@ -214,7 +231,7 @@ public class PhysicalShooter implements ShooterInterface {
     return this.isUpToSpeed;
   }
 
-  // UNUSED CUZ JACK IS A CHUD
+  // jack is NOT a chud
   public void passFuel() {
     setStaticSpeed(ShooterConstants.FLYWHEEL_STATIC_SPEED);
     this.isUpToSpeed =
@@ -227,39 +244,38 @@ public class PhysicalShooter implements ShooterInterface {
     SmartDashboard.putNumber("desired rps", 60);
     SmartDashboard.putBoolean("ready to shoot", isUpToSpeed());
 
-    if (isUpToSpeed()) {
-      reachedSpeedOnce = true;
-    }
+    // if (isUpToSpeed()) {
+    //   reachedSpeedOnce = true;
+    // }
 
-    double averageRollerVelocity =
-        Math.abs(rollerVelocityFilter.calculate(rollerVelocity.refresh().getValueAsDouble()));
+    // double averageRollerVelocity =
+    //     Math.abs(rollerVelocityFilter.calculate(rollerVelocity.refresh().getValueAsDouble()));
 
-    if (averageRollerVelocity > 2.5) rollerWasUpToSpeed = true;
+    // if (averageRollerVelocity > 2.5) rollerWasUpToSpeed = true;
 
-    if (reachedSpeedOnce) {
-      if (isPausingRollerFloor) pauseRollerFloorCounter++;
+    // if (reachedSpeedOnce) {
+    //   if (isPausingRollerFloor) pauseRollerFloorCounter++;
 
-      if (averageRollerVelocity < 2.5 && rollerWasUpToSpeed) {
-        isPausingRollerFloor = true;
-        rollerWasUpToSpeed = false;
-      }
+    //   if (averageRollerVelocity < 2.5 && rollerWasUpToSpeed) {
+    //     isPausingRollerFloor = true;
+    //     rollerWasUpToSpeed = false;
+    //   }
+    double rollerSpeed = ShooterConstants.SPINDEXER_SHOOT_SPEED;
+    setRollerSpeed(rollerSpeed);
 
-      double rollerSpeed = ShooterConstants.SPINDEXER_SHOOT_SPEED;
-      setRollerSpeed(rollerSpeed);
+    //   if (isPausingRollerFloor && pauseRollerFloorCounter < 50) {
+    //     rollerSpeed = 0;
+    //   } else if (isPausingRollerFloor && pauseRollerFloorCounter >= 50) {
+    //     isPausingRollerFloor = false;
+    //     rollerWasUpToSpeed = false;
+    //     pauseRollerFloorCounter = 0;
+    //   }
 
-      if (isPausingRollerFloor && pauseRollerFloorCounter < 50) {
-        rollerSpeed = 0;
-      } else if (isPausingRollerFloor && pauseRollerFloorCounter >= 50) {
-        isPausingRollerFloor = false;
-        rollerWasUpToSpeed = false;
-        pauseRollerFloorCounter = 0;
-      }
-
-      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
-    } else {
-      setRollerSpeed(0.0);
-      // setKickerSpeed(0.0);
-    }
+    //   // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+    // } else {
+    //   setRollerSpeed(0.0);
+    //   // setKickerSpeed(0.0);
+    // }
   }
 
   // public void setSpeed(double rps) {
@@ -276,12 +292,13 @@ public class PhysicalShooter implements ShooterInterface {
     bottomRightFlywheelMotor.set(0);
     rollerMotor.set(0);
     rollerFloor.set(0);
+    rightRoller.set(0);
   }
 
   public void setRollerSpeed(double speed) {
-    rollerMotor.set(speed);
-    rightRoller.set(speed);
-    rollerFloor.set(-speed);
+    rollerMotor.setControl(rpsRequest.withVelocity(-speed));
+    rightRoller.setControl(rpsRequest.withVelocity(speed));
+    rollerFloor.setControl(rpsRequest.withVelocity(-speed));
   }
 
   // public void setKickerSpeed(double speed) {
