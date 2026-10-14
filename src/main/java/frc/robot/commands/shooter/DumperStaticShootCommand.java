@@ -5,6 +5,7 @@
 package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
@@ -25,6 +26,7 @@ public class DumperStaticShootCommand extends Command {
   @Override
   public void execute() {
     shooter.passFuel();
+    new WaitCommand(0.5);
     shooter.setRollerSpeed(ShooterConstants.SPINDEXER_SHOOT_SPEED);
   }
 
