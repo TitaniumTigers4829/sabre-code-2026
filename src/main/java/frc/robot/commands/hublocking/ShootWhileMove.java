@@ -134,6 +134,7 @@ public class ShootWhileMove extends Command {
       shooter.setRoller(3);
     }
 
+    
     Logger.recordOutput("Shoot on move At Hub/Desired Hub", offsettedTarget);
 
     Logger.recordOutput("Shoot on move At Hub/Distance to Desire Hub", distance);
