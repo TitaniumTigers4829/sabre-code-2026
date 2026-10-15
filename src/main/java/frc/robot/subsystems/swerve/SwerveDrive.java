@@ -242,20 +242,28 @@ public class SwerveDrive extends SubsystemBase {
    * @param targetHeading desired field-relative robot heading
    */
   public void autoAlignHeading(Rotation2d targetHeading) {
-
     double currentHeading = getOdometryRotation2d().getRadians();
+    double targetHeadingRad = targetHeading.getRadians();
 
-    double targetHeadingRadians = targetHeading.getRadians();
+    // Normalize both angles to [-pi, pi]
+    currentHeading = Math.atan2(Math.sin(currentHeading), Math.cos(currentHeading));
 
-    double omega = headingController.calculate(currentHeading, targetHeadingRadians);
+    targetHeadingRad = Math.atan2(Math.sin(targetHeadingRad), Math.cos(targetHeadingRad));
+
+    // Calculate PID output
+    double omega = headingController.calculate(currentHeading, targetHeadingRad);
+
+    // Stop rotating when sufficiently aligned
+    if (headingController.atSetpoint()) {
+      omega = 0.0;
+    }
 
     Logger.recordOutput("HeadingAlign/CurrentHeading", currentHeading);
-
-    Logger.recordOutput("HeadingAlign/TargetHeading", targetHeadingRadians);
-
+    Logger.recordOutput("HeadingAlign/TargetHeading", targetHeadingRad);
     Logger.recordOutput("HeadingAlign/Omega", omega);
 
-    drive(0.0, 0.0, omega, true);
+    // Rotate in place; keep calling this method periodically
+    drive(0.0, 0.0, 0.7, true);
   }
 
   /**

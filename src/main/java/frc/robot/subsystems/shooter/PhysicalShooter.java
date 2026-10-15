@@ -180,8 +180,9 @@ public class PhysicalShooter implements ShooterInterface {
   }
 
   // test
-  public void setPercentOutput(double distance, boolean useOneMotor) {
-    double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
+  public void setPercentOutput(double distance) {
+    // double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
+    double desiredSpeed = flywheelRPS.get();
     setFlywheelSpeed(desiredSpeed);
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
@@ -190,45 +191,45 @@ public class PhysicalShooter implements ShooterInterface {
     SmartDashboard.putNumber("currentRPS", currentRPS.refresh().getValueAsDouble());
     SmartDashboard.putBoolean("ready to shoot", isUpToSpeed());
 
-    if (isUpToSpeed()) {
-      reachedSpeedOnce = true;
-    }
+    // if (isUpToSpeed()) {
+    //   reachedSpeedOnce = true;
+    // }
 
-    if (counter1 < 20) {
-      counter1++;
-      setRoller(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
-      return;
-    }
+    // if (counter1 < 20) {
+    //   counter1++;
+    //   setRoller(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
+    //   return;
+    // }
 
-    double averageRollerVelocity =
-        Math.abs(rollerVelocityFilter.calculate(rollerVelocity.refresh().getValueAsDouble()));
+    // double averageRollerVelocity =
+    //     Math.abs(rollerVelocityFilter.calculate(rollerVelocity.refresh().getValueAsDouble()));
 
-    if (averageRollerVelocity > 2.5) rollerWasUpToSpeed = true;
+    // if (averageRollerVelocity > 2.5) rollerWasUpToSpeed = true;
 
-    if (reachedSpeedOnce) {
-      if (isPausingRollerFloor) pauseRollerFloorCounter++;
+    // if (reachedSpeedOnce) {
+    //   if (isPausingRollerFloor) pauseRollerFloorCounter++;
 
-      if (averageRollerVelocity < 2.5 && rollerWasUpToSpeed) {
-        isPausingRollerFloor = true;
-        rollerWasUpToSpeed = false;
-      }
+    //   if (averageRollerVelocity < 2.5 && rollerWasUpToSpeed) {
+    //     isPausingRollerFloor = true;
+    //     rollerWasUpToSpeed = false;
+    //   }
 
-      double rollerSpeed = ShooterConstants.SPINDEXER_SHOOT_SPEED;
+    //   double rollerSpeed = ShooterConstants.SPINDEXER_SHOOT_SPEED;
 
-      if (isPausingRollerFloor && pauseRollerFloorCounter < 55) {
-        rollerSpeed = 0;
-      } else if (isPausingRollerFloor && pauseRollerFloorCounter >= 55) {
-        isPausingRollerFloor = false;
-        rollerWasUpToSpeed = false;
-        pauseRollerFloorCounter = 0;
-      }
+    //   if (isPausingRollerFloor && pauseRollerFloorCounter < 55) {
+    //     rollerSpeed = 0;
+    //   } else if (isPausingRollerFloor && pauseRollerFloorCounter >= 55) {
+    //     isPausingRollerFloor = false;
+    //     rollerWasUpToSpeed = false;
+    //     pauseRollerFloorCounter = 0;
+    //   }
 
-      setRoller(rollerSpeed);
-      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
-    } else {
-      // setRollerSpeed(0.0);
-      // setKickerSpeed(0.0);
-    }
+    //   setRoller(rollerSpeed);
+    //   // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+    // } else {
+    //   // setRollerSpeed(0.0);
+    //   // setKickerSpeed(0.0);
+    // }
   }
 
   public boolean isUpToSpeed() {

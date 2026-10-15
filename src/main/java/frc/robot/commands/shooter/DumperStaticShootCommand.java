@@ -4,6 +4,7 @@
 
 package frc.robot.commands.shooter;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
@@ -12,23 +13,24 @@ public class DumperStaticShootCommand extends Command {
   /** Creates a new DumperStaticShootCommand. */
   ShooterSubsystem shooter;
 
+  private final Timer timer = new Timer();
+
   public DumperStaticShootCommand(ShooterSubsystem shooter) {
     this.shooter = shooter;
-    addRequirements(shooter);
   }
 
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    shooter.startingShoot();
     shooter.setFlywheelSpeed(60);
+    timer.restart();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (shooter.isUpToSpeed()) {
-      shooter.setRoller(50);
+    if (timer.hasElapsed(3)) {
+      shooter.setRoller(3);
     }
   }
 

@@ -72,13 +72,13 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterInterface.setStaticSpeed(speedRps);
   }
 
-  public void setPercentOutput(double distance, boolean useOneMotor) {
-    shooterInterface.setPercentOutput(distance, useOneMotor);
+  public void setPercentOutput(double distance) {
+    shooterInterface.setPercentOutput(distance);
   }
 
-  public void setPercentOutput2(double distance) {
-    shooterInterface.setPercentOutput2(distance);
-  }
+  // public void setPercentOutput2(double distance) {
+  //   shooterInterface.setPercentOutput2(distance);
+  // }
 
   public boolean isAtSetpointRPM(double targetRPM) {
     return Math.abs(targetRPM - inputs.flywheelRPS) < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;

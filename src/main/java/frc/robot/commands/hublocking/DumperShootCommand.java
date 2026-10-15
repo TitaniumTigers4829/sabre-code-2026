@@ -119,7 +119,7 @@ public class DumperShootCommand extends Command {
 
     distance = offsettedTarget.getTranslation().getDistance(turretPose);
 
-    shooter.setPercentOutput(distance, false);
+    shooter.setPercentOutput(distance);
 
     SmartDashboard.putNumber("DistFromHub", distance);
   }

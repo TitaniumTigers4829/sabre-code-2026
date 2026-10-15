@@ -6,10 +6,12 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
+import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveDrive;
 import java.util.Optional;
@@ -38,6 +40,11 @@ public class ShootWhileMove extends Command {
   double distance;
   double dampener;
   boolean isAimingProperly = false;
+
+  private final Timer timer = new Timer();
+
+  private final SingleLinearInterpolator flywheelRPMLookupValues =
+      new SingleLinearInterpolator(ShooterConstants.DISTANCE_TO_FLYWHEEL_RPM);
 
   public SingleLinearInterpolator timeInAirLookupTable =
       new SingleLinearInterpolator(
@@ -74,6 +81,7 @@ public class ShootWhileMove extends Command {
     }
 
     shooter.startingShoot();
+    timer.restart();
   }
 
   @Override
@@ -117,9 +125,14 @@ public class ShootWhileMove extends Command {
     targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
     Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
-    drive.autoAlignHeading(desiredHeading);
+    // drive.autoAlignHeading(desiredHeading);
 
-    shooter.setPercentOutput(distance, useOneMotor.getAsBoolean());
+    shooter.setPercentOutput(distance);
+    double rps = shooter.getFlywheelRPS();
+    if (rps == flywheelRPMLookupValues.getLookupValue(distance)) {}
+    if (timer.hasElapsed(3)) {
+      shooter.setRoller(3);
+    }
 
     Logger.recordOutput("Shoot on move At Hub/Desired Hub", offsettedTarget);
 
