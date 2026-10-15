@@ -79,8 +79,8 @@ public class ShootWhileMove extends Command {
   @Override
   public void execute() {
     dampener = -0.5;
-    turretPose = robotPose.getTranslation();
     robotPose = drive.getEstimatedPose();
+    turretPose = robotPose.getTranslation();
     fieldRelative =
         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
     // fieldRelative = new ChassisSpeeds(0, 0, 0);
@@ -112,27 +112,20 @@ public class ShootWhileMove extends Command {
     deltaX = offsettedTarget.getX() - turretPose.getX();
     deltaY = offsettedTarget.getY() - turretPose.getY();
 
-    double turretAngleRad = Math.atan2(deltaY, deltaX) - robotPose.getRotation().getRadians();
+    double targetAngleRad = Math.atan2(deltaY, deltaX);
     // Wrap to [-pi, pi]
-    turretAngleRad = Math.atan2(Math.sin(turretAngleRad), Math.cos(turretAngleRad));
-    double desiredHeading = turretAngleRad / (2.0 * Math.PI);
+    targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
+    Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
-    desiredHeading -= 0.25; // .25 is because we zero it facing left instead of forward
+    drive.autoAlignHeading(desiredHeading);
 
-    SmartDashboard.putBoolean("aiming properly", isAimingProperly);
-
-    if (isAimingProperly) {
-      shooter.setPercentOutput(distance, useOneMotor.getAsBoolean());
-    } else {
-      shooter.stopShoot();
-    }
     shooter.setPercentOutput(distance, useOneMotor.getAsBoolean());
 
     Logger.recordOutput("Shoot on move At Hub/Desired Hub", offsettedTarget);
 
     Logger.recordOutput("Shoot on move At Hub/Distance to Desire Hub", distance);
 
-    Logger.recordOutput("Shoot on move At Hub/Desired Rotation", desiredHeading);
+    Logger.recordOutput("Shoot on move At Hub/Desired Rotation", targetAngleRad);
     Logger.recordOutput("Shoot on move At Hub/ XOffset", deltaX);
     Logger.recordOutput("Shoot on move At Hub/ YOffset", deltaY);
     Logger.recordOutput("Shoot on move At Hub/ OmegaXOffset", omegaXOffset);

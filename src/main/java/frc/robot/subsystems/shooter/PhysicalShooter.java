@@ -168,6 +168,12 @@ public class PhysicalShooter implements ShooterInterface {
   // }
 
   public void setRoller(double speedRps) {
+    if (speedRps == 0) {
+      rollerMotor.set(0);
+      rightRoller.set(0);
+      rollerFloor.set(0);
+      return;
+    }
     rollerMotor.setControl(rpsRequest.withVelocity(50));
     rightRoller.setControl(rpsRequest.withVelocity(-55));
     rollerFloor.setControl(rpsRequest.withVelocity(-50));
@@ -175,8 +181,7 @@ public class PhysicalShooter implements ShooterInterface {
 
   // test
   public void setPercentOutput(double distance, boolean useOneMotor) {
-    // double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
-    double desiredSpeed = flywheelRPS.get();
+    double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
     setFlywheelSpeed(desiredSpeed);
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
@@ -190,16 +195,8 @@ public class PhysicalShooter implements ShooterInterface {
     }
 
     if (counter1 < 20) {
+      counter1++;
       setRoller(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
-      // setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
-      return;
-    }
-
-    // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
-
-    if (counter1 > 20) {
-      setRoller(ShooterConstants.SPINDEXER_SHOOT_SPEED);
-      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
       return;
     }
 

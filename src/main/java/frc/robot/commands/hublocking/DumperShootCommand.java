@@ -70,14 +70,16 @@ public class DumperShootCommand extends Command {
     } else {
       targetX = 3;
     }
+    robotPose = drive.getEstimatedPose();
+    shooter.startingShoot();
   }
 
   @Override
   public void execute() {
     dampener = -1;
 
-    turretPose = robotPose.getTranslation();
     robotPose = drive.getEstimatedPose();
+    turretPose = robotPose.getTranslation();
     fieldRelative =
         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
 
@@ -103,6 +105,9 @@ public class DumperShootCommand extends Command {
 
       iterativeDistance = offsettedTarget.getTranslation().getDistance(turretPose);
     }
+
+    deltaX = offsettedTarget.getX() - turretPose.getX();
+    deltaY = offsettedTarget.getY() - turretPose.getY();
 
     double targetAngleRad = Math.atan2(deltaY, deltaX);
     // Wrap to [-pi, pi]
