@@ -200,9 +200,9 @@ public class Robot extends LoggedRobot {
     // driverController.b().whileTrue(new ReverseSpindexerCommand(shooterSubsystem));
     driverController.leftTrigger().whileTrue(new ReverseKickerAndRollers(shooterSubsystem));
 
-    // driverController
-    //     .rightTrigger()
-    //     .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
+    driverController
+        .leftTrigger()
+        .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
     driverController.b().whileTrue(new ShootWhileMove(swerveDrive, shooterSubsystem));
     driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
     driverController.rightTrigger().whileTrue(new Roller(shooterSubsystem));

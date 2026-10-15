@@ -26,7 +26,7 @@ public class ShooterConstants {
   public static double FLYWHEEL_D = 0;
 
   // 5 rpm
-  public static double FLYWHEEL_ERROR_TOLERANCE = 5;
+  public static double FLYWHEEL_ERROR_TOLERANCE = 2;
 
   public static double PASS_SHOOTER_SPEED = -70;
   public static double KICKER_PERCENT_OUTPUT = 70;

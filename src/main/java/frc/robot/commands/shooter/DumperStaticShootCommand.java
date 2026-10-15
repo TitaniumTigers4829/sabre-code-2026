@@ -6,7 +6,6 @@ package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
@@ -25,9 +24,9 @@ public class DumperStaticShootCommand extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    shooter.passFuel();
-    new WaitCommand(0.5);
-    shooter.setRollerSpeed(ShooterConstants.SPINDEXER_SHOOT_SPEED);
+    shooter.setFlywheelSpeed(60);
+    new WaitCommand(3);
+    shooter.setRoller(3); // arbitrary, doesnt actually use parameter
   }
 
   // Called once the command ends or is interrupted.

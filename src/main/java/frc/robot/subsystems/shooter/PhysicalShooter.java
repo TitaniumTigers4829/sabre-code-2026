@@ -150,19 +150,26 @@ public class PhysicalShooter implements ShooterInterface {
     return currentRPS.getValueAsDouble();
   }
 
-  public void setStaticSpeed(double speedRps) {
+  public void setFlywheelSpeed(double speedRps) {
     topRightFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
     topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
     bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
     bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
-    rollerMotor.setControl(rpsRequest.withVelocity(50));
-    rightRoller.setControl(rpsRequest.withVelocity(50));
-    rollerFloor.setControl(rpsRequest.withVelocity(-50));
   }
+
+  // public void setStaticSpeed(double speedRps) {
+  //   topRightFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+  //   topLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+  //   bottomRightFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+  //   bottomLeftFlywheelMotor.setControl(rpsRequest.withVelocity(speedRps));
+  //   rollerMotor.setControl(rpsRequest.withVelocity(50));
+  //   rightRoller.setControl(rpsRequest.withVelocity(50));
+  //   rollerFloor.setControl(rpsRequest.withVelocity(-50));
+  // }
 
   public void setRoller(double speedRps) {
     rollerMotor.setControl(rpsRequest.withVelocity(50));
-    rightRoller.setControl(rpsRequest.withVelocity(55));
+    rightRoller.setControl(rpsRequest.withVelocity(-55));
     rollerFloor.setControl(rpsRequest.withVelocity(-50));
   }
 
@@ -170,7 +177,7 @@ public class PhysicalShooter implements ShooterInterface {
   public void setPercentOutput(double distance, boolean useOneMotor) {
     // double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
     double desiredSpeed = flywheelRPS.get();
-    setStaticSpeed(desiredSpeed);
+    setFlywheelSpeed(desiredSpeed);
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
@@ -183,7 +190,7 @@ public class PhysicalShooter implements ShooterInterface {
     }
 
     if (counter1 < 20) {
-      setRollerSpeed(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
+      setRoller(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
       // setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
       return;
     }
@@ -191,7 +198,7 @@ public class PhysicalShooter implements ShooterInterface {
     // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
 
     if (counter1 > 20) {
-      setRollerSpeed(ShooterConstants.SPINDEXER_SHOOT_SPEED);
+      setRoller(ShooterConstants.SPINDEXER_SHOOT_SPEED);
       // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
       return;
     }
@@ -219,7 +226,7 @@ public class PhysicalShooter implements ShooterInterface {
         pauseRollerFloorCounter = 0;
       }
 
-      setRollerSpeed(rollerSpeed);
+      setRoller(rollerSpeed);
       // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
     } else {
       // setRollerSpeed(0.0);
@@ -232,50 +239,52 @@ public class PhysicalShooter implements ShooterInterface {
   }
 
   // jack is NOT a chud
+  // jack IS a chud
   public void passFuel() {
-    setStaticSpeed(ShooterConstants.FLYWHEEL_STATIC_SPEED);
+    setFlywheelSpeed(ShooterConstants.FLYWHEEL_STATIC_SPEED);
+    // new WaitCommand(3);
+
     this.isUpToSpeed =
         Math.abs(60 - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
     // SmartDashboard.putNumber("desiredRPS", desiredSpeed);
-    // SmartDashboard.putNumber("currentRPS", currentRPS.refresh().getValueAsDouble());
-    // setRollerSpeed(ShooterConstants.SPINDEXER_SHOOT_SPEED);
+    SmartDashboard.putNumber("currentRPS", currentRPS.refresh().getValueAsDouble());
 
     SmartDashboard.putNumber("desired rps", 60);
     SmartDashboard.putBoolean("ready to shoot", isUpToSpeed());
 
-    // if (isUpToSpeed()) {
-    //   reachedSpeedOnce = true;
-    // }
+    if (isUpToSpeed()) {
+      reachedSpeedOnce = true;
+    }
 
     // double averageRollerVelocity =
     //     Math.abs(rollerVelocityFilter.calculate(rollerVelocity.refresh().getValueAsDouble()));
 
     // if (averageRollerVelocity > 2.5) rollerWasUpToSpeed = true;
 
-    // if (reachedSpeedOnce) {
-    //   if (isPausingRollerFloor) pauseRollerFloorCounter++;
+    if (reachedSpeedOnce) {
+      // if (isPausingRollerFloor) pauseRollerFloorCounter++;
 
-    //   if (averageRollerVelocity < 2.5 && rollerWasUpToSpeed) {
-    //     isPausingRollerFloor = true;
-    //     rollerWasUpToSpeed = false;
-    //   }
-    double rollerSpeed = ShooterConstants.SPINDEXER_SHOOT_SPEED;
-    setRollerSpeed(rollerSpeed);
+      // if (averageRollerVelocity < 2.5 && rollerWasUpToSpeed) {
+      //   isPausingRollerFloor = true;
+      //   rollerWasUpToSpeed = false;
+      // }
+      double rollerSpeed = ShooterConstants.SPINDEXER_SHOOT_SPEED;
+      setRoller(rollerSpeed);
 
-    //   if (isPausingRollerFloor && pauseRollerFloorCounter < 50) {
-    //     rollerSpeed = 0;
-    //   } else if (isPausingRollerFloor && pauseRollerFloorCounter >= 50) {
-    //     isPausingRollerFloor = false;
-    //     rollerWasUpToSpeed = false;
-    //     pauseRollerFloorCounter = 0;
-    //   }
+      if (isPausingRollerFloor && pauseRollerFloorCounter < 50) {
+        rollerSpeed = 0;
+      } else if (isPausingRollerFloor && pauseRollerFloorCounter >= 50) {
+        isPausingRollerFloor = false;
+        rollerWasUpToSpeed = false;
+        pauseRollerFloorCounter = 0;
+      }
 
-    //   // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
-    // } else {
-    //   setRollerSpeed(0.0);
-    //   // setKickerSpeed(0.0);
-    // }
+      // setKickerSpeed(ShooterConstants.KICKER_PERCENT_OUTPUT);
+    } else {
+      setRoller(0.0);
+      // setKickerSpeed(0.0);
+    }
   }
 
   // public void setSpeed(double rps) {
@@ -293,12 +302,6 @@ public class PhysicalShooter implements ShooterInterface {
     rollerMotor.set(0);
     rollerFloor.set(0);
     rightRoller.set(0);
-  }
-
-  public void setRollerSpeed(double speed) {
-    rollerMotor.setControl(rpsRequest.withVelocity(-speed));
-    rightRoller.setControl(rpsRequest.withVelocity(speed));
-    rollerFloor.setControl(rpsRequest.withVelocity(-speed));
   }
 
   // public void setKickerSpeed(double speed) {

@@ -88,16 +88,20 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterInterface.passFuel();
   }
 
+  public void setRoller(double rps) {
+    shooterInterface.setRoller(rps);
+  }
+
+  public void setFlywheelSpeed(double rps) {
+    shooterInterface.setFlywheelSpeed(rps);
+  }
+
   public boolean isUpToSpeed() {
     return this.shooterInterface.isReadyToShoot();
   }
 
   public void setKickerSpeed(double speed) {
     this.shooterInterface.setKickerSpeed(speed);
-  }
-
-  public void setRollerSpeed(double speed) {
-    this.shooterInterface.setRollerSpeed(speed);
   }
 
   public boolean setIsAimingProperly(boolean isAimingProperly) {
