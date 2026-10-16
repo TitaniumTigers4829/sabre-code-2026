@@ -203,9 +203,12 @@ public class Robot extends LoggedRobot {
     driverController
         .leftTrigger()
         .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
-    driverController.b().whileTrue(new ShootWhileMove(swerveDrive, shooterSubsystem));
+    driverController
+        .b()
+        .whileTrue(new ShootWhileMove(swerveDrive, visionSubsystem, shooterSubsystem));
     driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
     driverController.rightTrigger().whileTrue(new Roller(shooterSubsystem));
+    driverController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
     // driverController
     //     .leftTrigger()
     //     .whileTrue(
@@ -223,7 +226,7 @@ public class Robot extends LoggedRobot {
         .whileTrue(new OuttakeCommand(intakeSubsystem, shooterSubsystem));
 
     operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
-    operatorController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
+    
     operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
     operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
     operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));

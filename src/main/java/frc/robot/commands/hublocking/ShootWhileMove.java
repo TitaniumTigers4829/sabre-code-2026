@@ -10,10 +10,12 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.commands.drive.AlignCommand;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveDrive;
+import frc.robot.subsystems.vision.VisionSubsystem;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
@@ -24,6 +26,7 @@ public class ShootWhileMove extends Command {
   private final BooleanSupplier useOneMotor;
 
   Pose2d robotPose;
+  boolean isRed;
   Translation2d targetPosition;
   Pose2d offsettedTarget;
   Translation2d turretPose;
@@ -40,6 +43,7 @@ public class ShootWhileMove extends Command {
   double distance;
   double dampener;
   boolean isAimingProperly = false;
+  VisionSubsystem vision;
 
   private final Timer timer = new Timer();
 
@@ -59,15 +63,21 @@ public class ShootWhileMove extends Command {
             {5.0, 1.45}
           });
 
-  public ShootWhileMove(SwerveDrive drive, ShooterSubsystem shooter, BooleanSupplier useOneMotor) {
+  public ShootWhileMove(
+      SwerveDrive drive,
+      VisionSubsystem visionSubsystem,
+      ShooterSubsystem shooter,
+      BooleanSupplier useOneMotor) {
     this.drive = drive;
     this.shooter = shooter;
     this.useOneMotor = useOneMotor;
+    this.vision = visionSubsystem;
   }
 
   // Still lets you make a "normal" one for if you never want to override e.g. autos
-  public ShootWhileMove(SwerveDrive drive, ShooterSubsystem shooter) {
-    this(drive, shooter, () -> false);
+  public ShootWhileMove(
+      SwerveDrive drive, VisionSubsystem visionSubsystem, ShooterSubsystem shooter) {
+    this(drive, visionSubsystem, shooter, () -> false);
   }
 
   @Override
@@ -76,8 +86,10 @@ public class ShootWhileMove extends Command {
     // Sets hub position based on the alliance
     if (alliance.isPresent() && alliance.get() == Alliance.Red) {
       targetPosition = FieldConstants.RED_HUB_CENTER;
+      isRed = true;
     } else {
       targetPosition = FieldConstants.BLUE_HUB_CENTER;
+      isRed = false;
     }
 
     shooter.startingShoot();
@@ -125,8 +137,9 @@ public class ShootWhileMove extends Command {
     targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
     Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
-    // drive.autoAlignHeading(desiredHeading);
+    AlignCommand align = new AlignCommand(drive, vision, offsettedTarget, isRed, false, 2);
 
+    align.execute();
     shooter.setPercentOutput(distance);
     double rps = shooter.getFlywheelRPS();
     if (rps == flywheelRPMLookupValues.getLookupValue(distance)) {}
@@ -134,7 +147,6 @@ public class ShootWhileMove extends Command {
       shooter.setRoller(3);
     }
 
-    
     Logger.recordOutput("Shoot on move At Hub/Desired Hub", offsettedTarget);
 
     Logger.recordOutput("Shoot on move At Hub/Distance to Desire Hub", distance);

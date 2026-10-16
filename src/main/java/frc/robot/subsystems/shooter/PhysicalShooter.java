@@ -29,7 +29,7 @@ public class PhysicalShooter implements ShooterInterface {
   private boolean rollerWasUpToSpeed = false;
   boolean reachedSpeedOnce = false;
 
-  LoggedTunableNumber flywheelRPS = new LoggedTunableNumber("Shooter/RPS", 0.0);
+  // LoggedTunableNumber flywheelRPS = new LoggedTunableNumber("Shooter/RPS", 0.0);
 
   private final TalonFX topLeftFlywheelMotor =
       new TalonFX(ShooterConstants.TOP_LEFT_FLYWHEEL_MOTOR_ID);
@@ -181,8 +181,8 @@ public class PhysicalShooter implements ShooterInterface {
 
   // test
   public void setPercentOutput(double distance) {
-    // double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
-    double desiredSpeed = flywheelRPS.get();
+    double desiredSpeed = flywheelRPMLookupValues.getLookupValue(distance);
+    // double desiredSpeed = flywheelRPS.get();
     setFlywheelSpeed(desiredSpeed);
     this.isUpToSpeed =
         Math.abs(desiredSpeed - currentRPS.refresh().getValueAsDouble())
