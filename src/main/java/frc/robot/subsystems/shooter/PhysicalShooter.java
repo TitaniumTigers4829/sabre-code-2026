@@ -15,7 +15,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.extras.logging.LoggedTunableNumber;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
 
 /** Add your docs here. */
@@ -104,7 +103,7 @@ public class PhysicalShooter implements ShooterInterface {
     TalonFXConfiguration rollerConfig = new TalonFXConfiguration();
     // TalonFXConfiguration kickerConfig = new TalonFXConfiguration();
     // TODO: tune
-    rollerConfig.CurrentLimits.StatorCurrentLimit = 30;
+    rollerConfig.CurrentLimits.StatorCurrentLimit = 20;
     rollerConfig.CurrentLimits.SupplyCurrentLimit = 10;
     rollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     rollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
@@ -120,8 +119,8 @@ public class PhysicalShooter implements ShooterInterface {
     rollerMotor.getConfigurator().apply(rollerConfig);
     rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     rollerFloor.getConfigurator().apply(rollerConfig);
-    rollerConfig.CurrentLimits.StatorCurrentLimit = 40;
-    rollerConfig.CurrentLimits.SupplyCurrentLimit = 20;
+    rollerConfig.CurrentLimits.StatorCurrentLimit = 20;
+    rollerConfig.CurrentLimits.SupplyCurrentLimit = 15;
     rightRoller.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
@@ -174,8 +173,14 @@ public class PhysicalShooter implements ShooterInterface {
       rollerFloor.set(0);
       return;
     }
-    rollerMotor.setControl(rpsRequest.withVelocity(50));
-    rightRoller.setControl(rpsRequest.withVelocity(-55));
+    if (speedRps == -ShooterConstants.SPINDEXER_INTAKE_SPEED) {
+      rollerMotor.setControl(rpsRequest.withVelocity(-60));
+      rightRoller.setControl(rpsRequest.withVelocity(35));
+      rollerFloor.setControl(rpsRequest.withVelocity(50));
+    }
+
+    rollerMotor.setControl(rpsRequest.withVelocity(60));
+    rightRoller.setControl(rpsRequest.withVelocity(-35));
     rollerFloor.setControl(rpsRequest.withVelocity(-50));
   }
 
@@ -243,12 +248,12 @@ public class PhysicalShooter implements ShooterInterface {
     // new WaitCommand(3);
 
     this.isUpToSpeed =
-        Math.abs(60 - currentRPS.refresh().getValueAsDouble())
+        Math.abs(50 - currentRPS.refresh().getValueAsDouble())
             < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
     // SmartDashboard.putNumber("desiredRPS", desiredSpeed);
     SmartDashboard.putNumber("currentRPS", currentRPS.refresh().getValueAsDouble());
 
-    SmartDashboard.putNumber("desired rps", 60);
+    SmartDashboard.putNumber("desired rps", 50);
     SmartDashboard.putBoolean("ready to shoot", isUpToSpeed());
 
     if (isUpToSpeed()) {

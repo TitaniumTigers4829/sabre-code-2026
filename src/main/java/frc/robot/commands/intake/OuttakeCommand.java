@@ -31,7 +31,7 @@ public class OuttakeCommand extends Command {
   @Override
   public void execute() {
     intakeSubsystem.setIntakeAngle(IntakeConstants.PIVOT_DOWN_POSITION);
-    shooterSubsystem.setRoller(-ShooterConstants.SPINDEXER_INTAKE_SPEED);
+    shooterSubsystem.setRoller(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
     if (intakeSubsystem.isIntakeDeployed()) {
       intakeSubsystem.outakeFuel();
     } else {

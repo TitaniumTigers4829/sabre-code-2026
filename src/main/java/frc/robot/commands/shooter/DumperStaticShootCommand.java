@@ -22,14 +22,14 @@ public class DumperStaticShootCommand extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    shooter.setFlywheelSpeed(60);
+    shooter.setFlywheelSpeed(40);
     timer.restart();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (timer.hasElapsed(3)) {
+    if (timer.hasElapsed(1.5)) {
       shooter.setRoller(3);
     }
   }

@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.HardwareConstants;
@@ -75,7 +76,7 @@ public class Robot extends LoggedRobot {
     CommandScheduler.getInstance().run();
 
     // Updates autos while the robot is enabled
-    // autos.update();
+    autos.update();
 
     // Return to normal thread priority without real time
     Threads.setCurrentThreadPriority(false, HardwareConstants.LOW_THREAD_PRIORITY);
@@ -88,7 +89,7 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {
-    // autos.update();
+    autos.update();
   }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
@@ -133,6 +134,21 @@ public class Robot extends LoggedRobot {
   }
   */
 
+  private double applyDeadzone(double val) {
+    double deadzone = 0.125;
+    double maxInput = 0.925;
+
+    if (Math.abs(val) < deadzone) {
+      return 0.0;
+    }
+
+    double scaled = (Math.abs(val) - deadzone) / (maxInput - deadzone);
+
+    scaled = Math.min(scaled, 1.0);
+
+    return Math.copySign(scaled, val);
+  }
+
   /** Configures the driver controller buttons and axes to control the robot */
   private void configureDriverController() {
     // Driver Left Stick
@@ -140,20 +156,26 @@ public class Robot extends LoggedRobot {
         new DoubleSupplier[] {
           () ->
               JoystickUtil.modifyAxisPolar(
-                  driverController::getLeftX, driverController::getLeftY, 3)[1],
+                  () -> applyDeadzone(driverController.getLeftX()),
+                  () -> applyDeadzone(driverController.getLeftY()),
+                  1)[1],
           () ->
               JoystickUtil.modifyAxisPolar(
-                  driverController::getLeftX, driverController::getLeftY, 3)[0]
+                  () -> applyDeadzone(driverController.getLeftX()),
+                  () -> applyDeadzone(driverController.getLeftY()),
+                  1)[0]
         };
+    // JoystickUtil.modifyAxisPolar(
+    // driverController::getLeftX, driverController::getLeftY, 1)[0]
 
     Command driveCommand =
         new DriveCommand(
             swerveDrive,
             visionSubsystem,
             // Translation in the X direction
-            () -> driverLeftStick[0].getAsDouble() * 0.5,
+            () -> driverLeftStick[0].getAsDouble() * 1,
             // Translation in the Y direction
-            () -> driverLeftStick[1].getAsDouble() * 0.5,
+            () -> driverLeftStick[1].getAsDouble() * 1,
             // Rotation
             () -> JoystickUtil.modifyAxis(driverController::getRightX, 3),
             // Robot relative
@@ -163,7 +185,7 @@ public class Robot extends LoggedRobot {
             // Drive speed for SWIM
             driverController.rightTrigger(),
             // Trench align
-            driverController.leftBumper());
+            () -> false);
 
     // Sets the default command for the swerve drive to the drive command
     swerveDrive.setDefaultCommand(driveCommand);
@@ -198,17 +220,21 @@ public class Robot extends LoggedRobot {
 
     // driverController.a().whileTrue(new DefenseCommand(intakeSubsystem));
     // driverController.b().whileTrue(new ReverseSpindexerCommand(shooterSubsystem));
-    driverController.leftTrigger().whileTrue(new ReverseKickerAndRollers(shooterSubsystem));
 
+    // driverController
+    //     .leftTrigger()
+    //     .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
     driverController
-        .leftTrigger()
-        .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
-    driverController
-        .b()
-        .whileTrue(new ShootWhileMove(swerveDrive, visionSubsystem, shooterSubsystem));
+        .rightTrigger()
+        .whileTrue(
+            Commands.sequence(
+                new InstantCommand(
+                    () -> swerveDrive.resetEstimatedPose(visionSubsystem.getLastSeenPose())),
+                new ShootWhileMove(swerveDrive, visionSubsystem, shooterSubsystem)));
     driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
-    driverController.rightTrigger().whileTrue(new Roller(shooterSubsystem));
-    driverController.a().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
+    driverController.leftBumper().whileTrue(new PassCommand(shooterSubsystem));
+    driverController.a().whileTrue(new ReverseRollers(shooterSubsystem));
+
     // driverController
     //     .leftTrigger()
     //     .whileTrue(
@@ -226,14 +252,13 @@ public class Robot extends LoggedRobot {
         .whileTrue(new OuttakeCommand(intakeSubsystem, shooterSubsystem));
 
     operatorController.y().whileTrue(new IntakePivotUpCommand(intakeSubsystem));
-    
+    operatorController.x().whileTrue(new IntakePivotDownCommand(intakeSubsystem));
+    operatorController.leftBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
+    operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
     operatorController.x().whileTrue(new IntakePivotBounceLower(intakeSubsystem));
     operatorController.b().whileTrue(new IntakePivotBounceHigher(intakeSubsystem));
-    operatorController.rightBumper().whileTrue(new MoveIntakeUpCommand(intakeSubsystem));
 
     operatorController.rightTrigger().whileTrue(new IntakeCommand(intakeSubsystem));
-
-    operatorController.povUp().whileTrue(new InstantCommand(() -> intakeSubsystem.zeroAngle()));
   }
 
   /** Checks the git status and records it to the log */
@@ -379,9 +404,9 @@ public class Robot extends LoggedRobot {
 
   /** Sets up the auto commands */
   private void setupAuto() {
-    /*this.autos =
-    new Autos(
-        this.swerveDrive, this.visionSubsystem, this.shooterSubsystem, this.intakeSubsystem);*/
+    this.autos =
+        new Autos(
+            this.swerveDrive, this.visionSubsystem, this.shooterSubsystem, this.intakeSubsystem);
   }
 
   /** This function is called periodically during operator control. */

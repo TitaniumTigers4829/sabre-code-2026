@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
-import frc.robot.commands.drive.AlignCommand;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
@@ -137,13 +136,14 @@ public class ShootWhileMove extends Command {
     targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
     Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
-    AlignCommand align = new AlignCommand(drive, vision, offsettedTarget, isRed, false, 2);
+    // AlignCommand align = new AlignCommand(drive, vision, offsettedTarget, isRed, false, 2);
 
-    align.execute();
+    // align.execute();
+
     shooter.setPercentOutput(distance);
     double rps = shooter.getFlywheelRPS();
     if (rps == flywheelRPMLookupValues.getLookupValue(distance)) {}
-    if (timer.hasElapsed(3)) {
+    if (timer.hasElapsed(1.5)) {
       shooter.setRoller(3);
     }
 

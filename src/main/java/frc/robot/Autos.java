@@ -50,6 +50,7 @@ public class Autos {
     this.visionSubsystem = visionSubsystem;
     this.shooterSubsystem = shooterSubsystem;
     this.intakeSubsystem = intakeSubsystem;
+
     chooser = new LoggedDashboardChooser<>("Auto Chooser");
     chooser.addDefaultOption(NONE_NAME, NONE_NAME);
     routines.put(NONE_NAME, Commands::none);
