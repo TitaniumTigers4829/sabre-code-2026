@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.HardwareConstants;
@@ -183,7 +182,7 @@ public class Robot extends LoggedRobot {
             // Rotation speed
             driverController.rightStick(),
             // Drive speed for SWIM
-            driverController.rightTrigger(),
+            () -> false,
             // Trench align
             () -> false);
 
@@ -224,14 +223,10 @@ public class Robot extends LoggedRobot {
     // driverController
     //     .leftTrigger()
     //     .whileTrue(new DumperShootCommand(swerveDrive, shooterSubsystem, () -> false));
-    driverController
-        .rightTrigger()
-        .whileTrue(
-            Commands.sequence(
-                new InstantCommand(
-                    () -> swerveDrive.resetEstimatedPose(visionSubsystem.getLastSeenPose())),
-                new ShootWhileMove(swerveDrive, visionSubsystem, shooterSubsystem)));
+    driverController.rightTrigger().toggleOnTrue(new ToggleSlowSpinCommand(shooterSubsystem));
+    // driverController.rightTrigger().whileTrue(new LimitTurnONOff());
     driverController.rightBumper().whileTrue(new DumperStaticShootCommand(shooterSubsystem));
+    // driverController.rightBumper().whileTrue(new LimitTurnONOff());
     driverController.leftBumper().whileTrue(new PassCommand(shooterSubsystem));
     driverController.a().whileTrue(new ReverseRollers(shooterSubsystem));
 

@@ -77,14 +77,14 @@ public class PhysicalShooter implements ShooterInterface {
     leaderFlywheelConfig.Slot0.kV = ShooterConstants.FLYWHEEL_V;
     leaderFlywheelConfig.Slot0.kA = ShooterConstants.FLYWHEEL_A;
     // TODO: drop down
-    leaderFlywheelConfig.CurrentLimits.StatorCurrentLimit = 30;
+    leaderFlywheelConfig.CurrentLimits.StatorCurrentLimit = 20;
 
-    // leaderFlywheelConfig.CurrentLimits.SupplyCurrentLimit = 160;
+    leaderFlywheelConfig.CurrentLimits.SupplyCurrentLimit = 10;
     leaderFlywheelConfig.TorqueCurrent.PeakForwardTorqueCurrent = 30;
     leaderFlywheelConfig.TorqueCurrent.PeakReverseTorqueCurrent = 0;
 
     leaderFlywheelConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    // leaderFlywheelConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    leaderFlywheelConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 
     // TODO: timeouts
     // TODO: unscuff
@@ -103,8 +103,8 @@ public class PhysicalShooter implements ShooterInterface {
     TalonFXConfiguration rollerConfig = new TalonFXConfiguration();
     // TalonFXConfiguration kickerConfig = new TalonFXConfiguration();
     // TODO: tune
-    rollerConfig.CurrentLimits.StatorCurrentLimit = 20;
-    rollerConfig.CurrentLimits.SupplyCurrentLimit = 10;
+    rollerConfig.CurrentLimits.StatorCurrentLimit = 25;
+    rollerConfig.CurrentLimits.SupplyCurrentLimit = 15;
     rollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     rollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     rollerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -118,9 +118,11 @@ public class PhysicalShooter implements ShooterInterface {
 
     rollerMotor.getConfigurator().apply(rollerConfig);
     rollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    rollerConfig.CurrentLimits.StatorCurrentLimit = 40;
+    rollerConfig.CurrentLimits.SupplyCurrentLimit = 40;
+    rollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+    rollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     rollerFloor.getConfigurator().apply(rollerConfig);
-    rollerConfig.CurrentLimits.StatorCurrentLimit = 20;
-    rollerConfig.CurrentLimits.SupplyCurrentLimit = 15;
     rightRoller.getConfigurator().apply(rollerConfig);
     // followerFlywheelMotor.setControl(
     //     new Follower(leaderFlywheelMotor.getDeviceID(), motorAlignment));
@@ -175,13 +177,13 @@ public class PhysicalShooter implements ShooterInterface {
     }
     if (speedRps == -ShooterConstants.SPINDEXER_INTAKE_SPEED) {
       rollerMotor.setControl(rpsRequest.withVelocity(-60));
-      rightRoller.setControl(rpsRequest.withVelocity(35));
-      rollerFloor.setControl(rpsRequest.withVelocity(50));
+      rightRoller.setControl(rpsRequest.withVelocity(45));
+      rollerFloor.setControl(rpsRequest.withVelocity(-50));
     }
 
     rollerMotor.setControl(rpsRequest.withVelocity(60));
-    rightRoller.setControl(rpsRequest.withVelocity(-35));
-    rollerFloor.setControl(rpsRequest.withVelocity(-50));
+    rightRoller.setControl(rpsRequest.withVelocity(-45));
+    rollerFloor.setControl(rpsRequest.withVelocity(50));
   }
 
   // test

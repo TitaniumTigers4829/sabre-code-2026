@@ -105,7 +105,7 @@ public class IntakeSubsystem extends SubsystemBase {
     SmartDashboard.putBoolean("intake deployed", inputs.isIntakeDeployed);
     SmartDashboard.putNumber("intake angle", inputs.intakeAngle);
     Logger.recordOutput("intake angle reallll", inputs.intakeAngle);
-    setIntakeAngle(intakePos);
+    // setIntakeAngle(intakePos);
     // if (isIntakeDeployed()) {
     // intakeFuel();
     // } else setSpeed(0);

@@ -74,8 +74,8 @@ public class PhysicalModule implements ModuleInterface {
     driveConfig.MotorOutput.Inverted = moduleConfig.driveReversed();
     driveConfig.MotorOutput.DutyCycleNeutralDeadband = 0.05;
     driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    driveConfig.CurrentLimits.SupplyCurrentLimit = ModuleConstants.DRIVE_SUPPLY_LIMIT;
-    driveConfig.CurrentLimits.StatorCurrentLimit = ModuleConstants.DRIVE_STATOR_LIMIT;
+    driveConfig.CurrentLimits.SupplyCurrentLimit = 55.0;
+    driveConfig.CurrentLimits.StatorCurrentLimit = 60.0;
     driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     driveConfig.MotorOutput.ControlTimesyncFreqHz = 250;
 

@@ -13,7 +13,6 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
-import frc.robot.subsystems.swerve.SwerveDrive;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -21,7 +20,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class ShootWhileMove extends Command {
   private final ShooterSubsystem shooter;
-  private final SwerveDrive drive;
+  // private final SwerveDrive drive;
   private final BooleanSupplier useOneMotor;
 
   Pose2d robotPose;
@@ -63,20 +62,17 @@ public class ShootWhileMove extends Command {
           });
 
   public ShootWhileMove(
-      SwerveDrive drive,
-      VisionSubsystem visionSubsystem,
-      ShooterSubsystem shooter,
-      BooleanSupplier useOneMotor) {
-    this.drive = drive;
+      // SwerveDrive drive,
+      VisionSubsystem visionSubsystem, ShooterSubsystem shooter, BooleanSupplier useOneMotor) {
+    // this.drive = drive;
     this.shooter = shooter;
     this.useOneMotor = useOneMotor;
     this.vision = visionSubsystem;
   }
 
   // Still lets you make a "normal" one for if you never want to override e.g. autos
-  public ShootWhileMove(
-      SwerveDrive drive, VisionSubsystem visionSubsystem, ShooterSubsystem shooter) {
-    this(drive, visionSubsystem, shooter, () -> false);
+  public ShootWhileMove(VisionSubsystem visionSubsystem, ShooterSubsystem shooter) {
+    this(visionSubsystem, shooter, () -> false);
   }
 
   @Override
@@ -98,13 +94,13 @@ public class ShootWhileMove extends Command {
   @Override
   public void execute() {
     dampener = -0.5;
-    robotPose = drive.getEstimatedPose();
+    robotPose = new Pose2d();
     turretPose = robotPose.getTranslation();
-    fieldRelative =
-        ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
+    // fieldRelative =
+    // ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
     // fieldRelative = new ChassisSpeeds(0, 0, 0);
 
-    velocityOmega = drive.getChassisSpeeds().omegaRadiansPerSecond;
+    // velocityOmega = drive.getChassisSpeeds().omegaRadiansPerSecond;
     // velocityOmega = 0;
 
     iterativeDistance = turretPose.getDistance(targetPosition);
@@ -143,7 +139,7 @@ public class ShootWhileMove extends Command {
     shooter.setPercentOutput(distance);
     double rps = shooter.getFlywheelRPS();
     if (rps == flywheelRPMLookupValues.getLookupValue(distance)) {}
-    if (timer.hasElapsed(1.5)) {
+    if (timer.hasElapsed(1.7)) {
       shooter.setRoller(3);
     }
 

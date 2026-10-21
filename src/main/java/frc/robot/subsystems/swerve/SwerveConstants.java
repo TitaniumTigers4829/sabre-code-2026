@@ -215,8 +215,8 @@ public class SwerveConstants {
     public static final double DRIVE_TO_METERS_PER_SECOND =
         WHEEL_CIRCUMFERENCE_METERS / DRIVE_GEAR_RATIO;
 
-    public static final double DRIVE_SUPPLY_LIMIT = 55.0;
-    public static final double DRIVE_STATOR_LIMIT = 60.0;
+    public double DRIVE_SUPPLY_LIMIT = 55.0; // 55
+    public double DRIVE_STATOR_LIMIT = 60.0; // 60
 
     public static final double TURN_P = 1000.0;
     public static final double TURN_I = 0.0;

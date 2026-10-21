@@ -29,7 +29,7 @@ public class PassCommand extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (timer.hasElapsed(1.5)) {
+    if (timer.hasElapsed(1.7)) {
       shooter.setRoller(3);
     }
   }
