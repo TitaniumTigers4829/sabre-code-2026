@@ -36,7 +36,7 @@ public class ShootWhileMove extends Command {
   double omegaXOffset = 0;
   double omegaYOffset = 0;
   double tAir = 1; // calculate this with utility class or interpolating tree
-  ChassisSpeeds fieldRelative;
+  ChassisSpeeds fieldRelative = new ChassisSpeeds();
   double iterativeDistance = 0;
   double distance;
   double dampener;
