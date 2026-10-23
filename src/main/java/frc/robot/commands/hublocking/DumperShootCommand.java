@@ -1,4 +1,4 @@
-package frc.robot.commands.shooter;
+package frc.robot.commands.hublocking;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -6,28 +6,23 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
-import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.swerve.SwerveDrive;
-import frc.robot.subsystems.turret.TurretConstants;
-import frc.robot.subsystems.turret.TurretSubsystem;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
-public class PassFuelCommand extends Command {
-  private final TurretSubsystem turret;
+public class DumperShootCommand extends Command {
   private final ShooterSubsystem shooter;
-  private final AdjustableHoodSubsystem hood;
   private final SwerveDrive drive;
   private final BooleanSupplier overridingHood;
 
   Pose2d robotPose;
   double targetX;
   Pose2d offsettedTarget;
-  Translation2d turretOffsetPose = TurretConstants.TURRET_OFFSET;
   Translation2d turretPose;
   double deltaX = 0;
   double deltaY = 0;
@@ -58,18 +53,12 @@ public class PassFuelCommand extends Command {
             {10, 3}
           });
 
-  public PassFuelCommand(
-      SwerveDrive drive,
-      TurretSubsystem turret,
-      ShooterSubsystem shooter,
-      AdjustableHoodSubsystem hood,
-      BooleanSupplier overridingHood) {
+  public DumperShootCommand(
+      SwerveDrive drive, ShooterSubsystem shooter, BooleanSupplier overridingHood) {
     this.drive = drive;
-    this.turret = turret;
     this.shooter = shooter;
-    this.hood = hood;
     this.overridingHood = overridingHood;
-    addRequirements(turret, shooter, hood);
+    addRequirements(shooter);
   }
 
   @Override
@@ -81,6 +70,8 @@ public class PassFuelCommand extends Command {
     } else {
       targetX = 3;
     }
+    robotPose = drive.getEstimatedPose();
+    shooter.startingShoot();
   }
 
   @Override
@@ -88,9 +79,7 @@ public class PassFuelCommand extends Command {
     dampener = -1;
 
     robotPose = drive.getEstimatedPose();
-    turretPose =
-        robotPose.getTranslation().plus(turretOffsetPose.rotateBy(robotPose.getRotation()));
-
+    turretPose = robotPose.getTranslation();
     fieldRelative =
         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
 
@@ -108,11 +97,6 @@ public class PassFuelCommand extends Command {
       velocityXOffset = fieldRelative.vxMetersPerSecond * tAir * dampener;
       velocityYOffset = fieldRelative.vyMetersPerSecond * tAir * dampener;
 
-      omegaXOffset =
-          -velocityOmega * turretOffsetPose.rotateBy(robotPose.getRotation()).getY() * tAir;
-      omegaYOffset =
-          velocityOmega * turretOffsetPose.rotateBy(robotPose.getRotation()).getX() * tAir;
-
       offsettedTarget =
           new Pose2d(
               targetPosition.getX() - velocityXOffset - omegaXOffset,
@@ -122,39 +106,22 @@ public class PassFuelCommand extends Command {
       iterativeDistance = offsettedTarget.getTranslation().getDistance(turretPose);
     }
 
-    distance = offsettedTarget.getTranslation().getDistance(turretPose);
-
     deltaX = offsettedTarget.getX() - turretPose.getX();
     deltaY = offsettedTarget.getY() - turretPose.getY();
 
-    double turretAngleRad = Math.atan2(deltaY, deltaX) - robotPose.getRotation().getRadians();
+    double targetAngleRad = Math.atan2(deltaY, deltaX);
     // Wrap to [-pi, pi]
-    turretAngleRad = Math.atan2(Math.sin(turretAngleRad), Math.cos(turretAngleRad));
-    double desiredHeading = turretAngleRad / (2.0 * Math.PI);
+    targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
+    Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
-    desiredHeading -= 0.25; // .25 is because we zero it facing left instead of forward
+    // UNTESTED. PLEASE TEST OR THE ROBOT MAY KILL YOU.
+    drive.autoAlignHeading(desiredHeading);
 
-    turret.setTurretAngle(desiredHeading);
-    if (Math.abs(desiredHeading * TurretConstants.CANCODER_TO_TURRET - turret.getTurretAngle())
-        < .1) {
-      isAimingProperly = true;
-    } else {
-      isAimingProperly = false;
-    }
+    distance = offsettedTarget.getTranslation().getDistance(turretPose);
 
-    if (isAimingProperly) {
-      shooter.setPercentOutput(distance, false);
-    } else {
-      shooter.stopShoot();
-    }
-    shooter.setPercentOutput(distance, false);
+    shooter.setPercentOutput(distance);
 
-    if (this.overridingHood.getAsBoolean()) {
-      shooter.setRollerSpeed(0);
-      shooter.stopShoot();
-    } else {
-      hood.setHoodAngle(distance);
-    }
+    SmartDashboard.putNumber("DistFromHub", distance);
   }
 
   @Override
@@ -165,6 +132,5 @@ public class PassFuelCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     shooter.stopShoot();
-    hood.setAngleWithoutDist(0);
   }
 }

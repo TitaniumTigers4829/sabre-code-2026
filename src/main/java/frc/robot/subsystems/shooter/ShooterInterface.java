@@ -31,11 +31,13 @@ public interface ShooterInterface extends Subsystem {
 
   public default void setVolts(double volts) {}
 
-  public default void setRollerSpeed(double speed) {}
+  public default void setRoller(double rps) {}
 
-  public default void setPercentOutput(double distance, boolean useOneMotor) {}
+  public default void setFlywheelSpeed(double rps) {}
 
-  public default void setPercentOutput2(double speed) {}
+  public default void setPercentOutput(double distance) {}
+
+  // public default void setPercentOutput2(double speed) {}
 
   public default double getVolts() {
     return 0.0;
@@ -44,6 +46,8 @@ public interface ShooterInterface extends Subsystem {
   public default void passFuel() {}
 
   public default void stopShoot() {}
+
+  public default void setStaticSpeed(double speedRps) {}
 
   public default void openLoop(double output) {}
 

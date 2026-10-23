@@ -68,13 +68,17 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterInterface.stopShoot();
   }
 
-  public void setPercentOutput(double distance, boolean useOneMotor) {
-    shooterInterface.setPercentOutput(distance, useOneMotor);
+  public void setStaticSpeed(double speedRps) {
+    shooterInterface.setStaticSpeed(speedRps);
   }
 
-  public void setPercentOutput2(double distance) {
-    shooterInterface.setPercentOutput2(distance);
+  public void setPercentOutput(double distance) {
+    shooterInterface.setPercentOutput(distance);
   }
+
+  // public void setPercentOutput2(double distance) {
+  //   shooterInterface.setPercentOutput2(distance);
+  // }
 
   public boolean isAtSetpointRPM(double targetRPM) {
     return Math.abs(targetRPM - inputs.flywheelRPS) < ShooterConstants.FLYWHEEL_ERROR_TOLERANCE;
@@ -84,16 +88,20 @@ public class ShooterSubsystem extends SubsystemBase {
     shooterInterface.passFuel();
   }
 
+  public void setRoller(double rps) {
+    shooterInterface.setRoller(rps);
+  }
+
+  public void setFlywheelSpeed(double rps) {
+    shooterInterface.setFlywheelSpeed(rps);
+  }
+
   public boolean isUpToSpeed() {
     return this.shooterInterface.isReadyToShoot();
   }
 
   public void setKickerSpeed(double speed) {
     this.shooterInterface.setKickerSpeed(speed);
-  }
-
-  public void setRollerSpeed(double speed) {
-    this.shooterInterface.setRollerSpeed(speed);
   }
 
   public boolean setIsAimingProperly(boolean isAimingProperly) {

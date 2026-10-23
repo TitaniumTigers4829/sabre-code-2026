@@ -5,15 +5,15 @@
 package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
+import frc.robot.subsystems.swerve.SwerveConstants;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class ManualHoodDown extends Command {
-  AdjustableHoodSubsystem hoodSubsystem;
+public class LimitTurnONOff extends Command {
+  /** Creates a new LimitTurnONOff. */
+  SwerveConstants.ModuleConstants swerve;
 
-  /** Creates a new ManualHoodDown. */
-  public ManualHoodDown(AdjustableHoodSubsystem hoodSubsystem) {
-    this.hoodSubsystem = hoodSubsystem;
+  public LimitTurnONOff() {
+    this.swerve = swerve;
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
@@ -24,13 +24,15 @@ public class ManualHoodDown extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    hoodSubsystem.setSpeed(-0.05);
+    swerve.DRIVE_STATOR_LIMIT = 5.0;
+    swerve.DRIVE_SUPPLY_LIMIT = 5.0;
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    hoodSubsystem.setSpeed(0);
+    swerve.DRIVE_STATOR_LIMIT = 60.0;
+    swerve.DRIVE_SUPPLY_LIMIT = 55.0;
   }
 
   // Returns true when the command should end.

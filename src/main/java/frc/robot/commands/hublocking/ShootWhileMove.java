@@ -6,31 +6,27 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.extras.math.interpolation.SingleLinearInterpolator;
-import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
+import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
-import frc.robot.subsystems.swerve.SwerveDrive;
-import frc.robot.subsystems.turret.TurretConstants;
-import frc.robot.subsystems.turret.TurretSubsystem;
+import frc.robot.subsystems.vision.VisionSubsystem;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class ShootWhileMove extends Command {
-  private final TurretSubsystem turret;
   private final ShooterSubsystem shooter;
-  private final AdjustableHoodSubsystem hood;
-  private final SwerveDrive drive;
-  private final BooleanSupplier overridingHood;
+  // private final SwerveDrive drive;
   private final BooleanSupplier useOneMotor;
 
   Pose2d robotPose;
+  boolean isRed;
   Translation2d targetPosition;
   Pose2d offsettedTarget;
-  Translation2d turretOffsetPose = TurretConstants.TURRET_OFFSET;
   Translation2d turretPose;
   double deltaX = 0;
   double deltaY = 0;
@@ -40,11 +36,17 @@ public class ShootWhileMove extends Command {
   double omegaXOffset = 0;
   double omegaYOffset = 0;
   double tAir = 1; // calculate this with utility class or interpolating tree
-  ChassisSpeeds fieldRelative;
+  ChassisSpeeds fieldRelative = new ChassisSpeeds();
   double iterativeDistance = 0;
   double distance;
   double dampener;
   boolean isAimingProperly = false;
+  VisionSubsystem vision;
+
+  private final Timer timer = new Timer();
+
+  private final SingleLinearInterpolator flywheelRPMLookupValues =
+      new SingleLinearInterpolator(ShooterConstants.DISTANCE_TO_FLYWHEEL_RPM);
 
   public SingleLinearInterpolator timeInAirLookupTable =
       new SingleLinearInterpolator(
@@ -60,28 +62,17 @@ public class ShootWhileMove extends Command {
           });
 
   public ShootWhileMove(
-      SwerveDrive drive,
-      TurretSubsystem turret,
-      ShooterSubsystem shooter,
-      AdjustableHoodSubsystem hood,
-      BooleanSupplier overridingHood,
-      BooleanSupplier useOneMotor) {
-    this.drive = drive;
-    this.turret = turret;
+      // SwerveDrive drive,
+      VisionSubsystem visionSubsystem, ShooterSubsystem shooter, BooleanSupplier useOneMotor) {
+    // this.drive = drive;
     this.shooter = shooter;
-    this.hood = hood;
-    this.overridingHood = overridingHood;
     this.useOneMotor = useOneMotor;
-    addRequirements(turret, shooter, hood);
+    this.vision = visionSubsystem;
   }
 
   // Still lets you make a "normal" one for if you never want to override e.g. autos
-  public ShootWhileMove(
-      SwerveDrive drive,
-      TurretSubsystem turret,
-      ShooterSubsystem shooter,
-      AdjustableHoodSubsystem hood) {
-    this(drive, turret, shooter, hood, () -> false, () -> false);
+  public ShootWhileMove(VisionSubsystem visionSubsystem, ShooterSubsystem shooter) {
+    this(visionSubsystem, shooter, () -> false);
   }
 
   @Override
@@ -90,25 +81,26 @@ public class ShootWhileMove extends Command {
     // Sets hub position based on the alliance
     if (alliance.isPresent() && alliance.get() == Alliance.Red) {
       targetPosition = FieldConstants.RED_HUB_CENTER;
+      isRed = true;
     } else {
       targetPosition = FieldConstants.BLUE_HUB_CENTER;
+      isRed = false;
     }
 
     shooter.startingShoot();
+    timer.restart();
   }
 
   @Override
   public void execute() {
     dampener = -0.5;
-    robotPose = drive.getEstimatedPose();
-    turretPose =
-        robotPose.getTranslation().plus(turretOffsetPose.rotateBy(robotPose.getRotation()));
-
-    fieldRelative =
-        ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
+    robotPose = new Pose2d();
+    turretPose = robotPose.getTranslation();
+    // fieldRelative =
+    // ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), robotPose.getRotation());
     // fieldRelative = new ChassisSpeeds(0, 0, 0);
 
-    velocityOmega = drive.getChassisSpeeds().omegaRadiansPerSecond;
+    // velocityOmega = drive.getChassisSpeeds().omegaRadiansPerSecond;
     // velocityOmega = 0;
 
     iterativeDistance = turretPose.getDistance(targetPosition);
@@ -120,11 +112,6 @@ public class ShootWhileMove extends Command {
 
       velocityXOffset = fieldRelative.vxMetersPerSecond * tAir * dampener;
       velocityYOffset = fieldRelative.vyMetersPerSecond * tAir * dampener;
-
-      omegaXOffset =
-          -velocityOmega * turretOffsetPose.rotateBy(robotPose.getRotation()).getY() * tAir;
-      omegaYOffset =
-          velocityOmega * turretOffsetPose.rotateBy(robotPose.getRotation()).getX() * tAir;
 
       offsettedTarget =
           new Pose2d(
@@ -140,42 +127,27 @@ public class ShootWhileMove extends Command {
     deltaX = offsettedTarget.getX() - turretPose.getX();
     deltaY = offsettedTarget.getY() - turretPose.getY();
 
-    double turretAngleRad = Math.atan2(deltaY, deltaX) - robotPose.getRotation().getRadians();
+    double targetAngleRad = Math.atan2(deltaY, deltaX);
     // Wrap to [-pi, pi]
-    turretAngleRad = Math.atan2(Math.sin(turretAngleRad), Math.cos(turretAngleRad));
-    double desiredHeading = turretAngleRad / (2.0 * Math.PI);
+    targetAngleRad = Math.atan2(Math.sin(targetAngleRad), Math.cos(targetAngleRad));
+    Rotation2d desiredHeading = new Rotation2d(targetAngleRad);
 
-    desiredHeading -= 0.25; // .25 is because we zero it facing left instead of forward
+    // AlignCommand align = new AlignCommand(drive, vision, offsettedTarget, isRed, false, 2);
 
-    turret.setTurretAngle(desiredHeading);
-    if (Math.abs(desiredHeading * TurretConstants.CANCODER_TO_TURRET - turret.getTurretAngle())
-        < .1) {
-      isAimingProperly = true;
-    } else {
-      isAimingProperly = false;
-    }
+    // align.execute();
 
-    SmartDashboard.putBoolean("aiming properly", isAimingProperly);
-
-    if (isAimingProperly) {
-      shooter.setPercentOutput(distance, useOneMotor.getAsBoolean());
-    } else {
-      shooter.stopShoot();
-    }
-    shooter.setPercentOutput(distance, useOneMotor.getAsBoolean());
-
-    if (this.overridingHood.getAsBoolean()) {
-      shooter.setRollerSpeed(0);
-      shooter.stopShoot();
-    } else {
-      hood.setHoodAngle(distance);
+    shooter.setPercentOutput(distance);
+    double rps = shooter.getFlywheelRPS();
+    if (rps == flywheelRPMLookupValues.getLookupValue(distance)) {}
+    if (timer.hasElapsed(1.7)) {
+      shooter.setRoller(3);
     }
 
     Logger.recordOutput("Shoot on move At Hub/Desired Hub", offsettedTarget);
 
     Logger.recordOutput("Shoot on move At Hub/Distance to Desire Hub", distance);
 
-    Logger.recordOutput("Shoot on move At Hub/Desired Rotation", desiredHeading);
+    Logger.recordOutput("Shoot on move At Hub/Desired Rotation", targetAngleRad);
     Logger.recordOutput("Shoot on move At Hub/ XOffset", deltaX);
     Logger.recordOutput("Shoot on move At Hub/ YOffset", deltaY);
     Logger.recordOutput("Shoot on move At Hub/ OmegaXOffset", omegaXOffset);
@@ -193,6 +165,5 @@ public class ShootWhileMove extends Command {
   @Override
   public void end(boolean interrupted) {
     shooter.stopShoot();
-    hood.setAngleWithoutDist(0);
   }
 }

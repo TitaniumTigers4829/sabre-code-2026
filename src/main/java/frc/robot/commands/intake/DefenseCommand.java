@@ -7,17 +7,14 @@ package frc.robot.commands.intake;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeSubsystem;
-import frc.robot.subsystems.turret.TurretSubsystem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class DefenseCommand extends Command {
   private final IntakeSubsystem intakeSubsystem;
-  private final TurretSubsystem turretSubsystem;
 
   /** Creates a new DefenseCommand. */
-  public DefenseCommand(IntakeSubsystem intakeSubsystem, TurretSubsystem turretSubsystem) {
+  public DefenseCommand(IntakeSubsystem intakeSubsystem) {
     this.intakeSubsystem = intakeSubsystem;
-    this.turretSubsystem = turretSubsystem;
   }
 
   // Called when the command is initially scheduled.
@@ -28,14 +25,12 @@ public class DefenseCommand extends Command {
   @Override
   public void execute() {
     intakeSubsystem.setIntakeAngle(IntakeConstants.PIVOT_ALL_THE_WAY_UP_POSITION);
-    turretSubsystem.setTurretAngle(0);
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
     intakeSubsystem.setPivotSpeed(0);
-    turretSubsystem.setPercentOutput(0);
   }
 
   // Returns true when the command should end.

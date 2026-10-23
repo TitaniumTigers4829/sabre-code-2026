@@ -21,7 +21,7 @@ import frc.robot.Constants.HardwareConstants;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class PhysicalIntake implements IntakeInterface {
-  private TalonFX intakeMotorOuter = new TalonFX(IntakeConstants.INTAKE_MOTOR_1_ID);
+  // private TalonFX intakeMotorOuter = new TalonFX(IntakeConstants.INTAKE_MOTOR_1_ID);
   private TalonFX intakeMotorInside = new TalonFX(IntakeConstants.INTAKE_MOTOR_2_ID);
   private TalonFX intakePivotMotorRight =
       new TalonFX(IntakeConstants.PIVOT_MOTOR_RIGHT_ID, HardwareConstants.RIO_CAN_BUS_STRING);
@@ -105,7 +105,7 @@ public class PhysicalIntake implements IntakeInterface {
     pivotConfig.MotionMagic.MotionMagicAcceleration = 5.0;
     pivotConfig.MotionMagic.MotionMagicCruiseVelocity = 2.5;
 
-    intakeMotorOuter.getConfigurator().apply(intakeOuterConfig);
+    // intakeMotorOuter.getConfigurator().apply(intakeOuterConfig);
     intakeMotorInside.getConfigurator().apply(intakeInnerConfig);
     intakePivotMotorRight.getConfigurator().apply(pivotConfig);
 
@@ -123,7 +123,7 @@ public class PhysicalIntake implements IntakeInterface {
 
     BaseStatusSignal.setUpdateFrequencyForAll(100.0, intakeAngle, intakePivotSpeed);
     ParentDevice.optimizeBusUtilizationForAll(
-        intakeMotorOuter, intakeMotorInside, intakePivotMotorRight); // intakePivotMotorLeft
+        intakeMotorInside, intakePivotMotorRight); // intakePivotMotorLeft
   }
 
   public void updateInputs(IntakeInputs inputs) {
@@ -145,17 +145,17 @@ public class PhysicalIntake implements IntakeInterface {
   }
 
   public void intakeFuel() {
-    intakeMotorOuter.set(IntakeConstants.INTAKE_SPEED_OUTER);
+    // intakeMotorOuter.set(IntakeConstants.INTAKE_SPEED_OUTER);
     intakeMotorInside.set(IntakeConstants.INTAKE_SPEED_INNER);
   }
 
   public void outakeFuel() {
-    intakeMotorOuter.set(-IntakeConstants.INTAKE_SPEED_OUTER);
+    // intakeMotorOuter.set(-IntakeConstants.INTAKE_SPEED_OUTER);
     intakeMotorInside.set(-IntakeConstants.INTAKE_SPEED_INNER);
   }
 
   public void setSpeed(double speed) {
-    intakeMotorOuter.set(speed);
+    // intakeMotorOuter.set(speed);
     intakeMotorInside.set(speed);
   }
 

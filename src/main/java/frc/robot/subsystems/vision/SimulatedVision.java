@@ -3,12 +3,10 @@ package frc.robot.subsystems.vision;
 // import com.titaniumtigers4829.utils.NTUtils;
 import edu.wpi.first.math.geometry.*;
 // import edu.wpi.first.networktables.NetworkTable;
-import frc.robot.subsystems.vision.VisionConstants.Limelight;
 // import java.util.ArrayList;
 // import java.util.Arrays;
 // import java.util.List;
 import java.util.function.Supplier;
-import org.photonvision.PhotonCamera;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -61,10 +59,11 @@ public class SimulatedVision extends PhysicalVision {
     // with visible
     // targets.
     // Instance variables
-    shooterCameraSim = new PhotonCameraSim(getSimulationCamera(Limelight.SIDE), cameraProperties);
-    pVisionSim
-        .get()
-        .addCamera(shooterCameraSim, VisionConstants.BACK_TRANSFORM); // check inverse things
+    // shooterCameraSim = new PhotonCameraSim(getSimulationCamera(Limelight.SIDE),
+    // cameraProperties);
+    // pVisionSim
+    //     .get()
+    //     .addCamera(shooterCameraSim, VisionConstants.BACK_TRANSFORM); // check inverse things
 
     // Enable the raw and processed streams. (http://localhost:1181 / 1182)
     shooterCameraSim.enableRawStream(true);
@@ -150,12 +149,12 @@ public class SimulatedVision extends PhysicalVision {
    * @param limelight The Limelight to get the camera for
    * @return A PhotonCamera object for the given Limelight
    */
-  private PhotonCamera getSimulationCamera(Limelight limelight) {
-    return switch (limelight) {
-      case SIDE -> VisionConstants.FRONT_CAMERA;
-      default -> throw new IllegalArgumentException("Invalid limelight camera " + limelight);
-    };
-  }
+  // private PhotonCamera getSimulationCamera(Limelight limelight) {
+  //   return switch (limelight) {
+  //     case SIDE -> VisionConstants.FRONT_CAMERA;
+  //     default -> throw new IllegalArgumentException("Invalid limelight camera " + limelight);
+  //   };
+  // }
 
   /**
    * Gets the Limelight network table

@@ -2,7 +2,7 @@ package frc.robot.subsystems.intake;
 
 public class IntakeConstants {
   public static final int INTAKE_MOTOR_1_ID = 9;
-  public static final int INTAKE_MOTOR_2_ID = 0; // ORIGINALLY 17
+  public static final int INTAKE_MOTOR_2_ID = 35; // ORIGINALLY 17
   public static final int PIVOT_MOTOR_RIGHT_ID = 23; // 41, ALSO ACTUALLY LEFT
   // public static final int PIVOT_MOTOR_LEFT_ID = 23;
   public static final int CANCODER_ID = 19;
@@ -27,18 +27,18 @@ public class IntakeConstants {
   public static final double ZERO_ANGLE = 0.427; // 0.09;
 
   // DONT TOUCH THESE ARE SOMEWHAT GOOD CURRENT LIMIT VALUES
-  public static final double OUTER_STATOR_CURRENT_LIMIT = 80;
-  public static final double OUTER_SUPPLY_CURRENT_LIMIT = 65;
+  public static final double OUTER_STATOR_CURRENT_LIMIT = 40;
+  public static final double OUTER_SUPPLY_CURRENT_LIMIT = 35;
 
-  public static final double INNER_STATOR_CURRENT_LIMIT = 80;
-  public static final double INNER_SUPPLY_CURRENT_LIMIT = 5;
+  public static final double INNER_STATOR_CURRENT_LIMIT = 30;
+  public static final double INNER_SUPPLY_CURRENT_LIMIT = 20;
 
-  public static final double PIVOT_STATOR_CURRENT_LIMIT = 80;
-  public static final double PIVOT_SUPPLY_CURRENT_LIMIT = 25;
+  public static final double PIVOT_STATOR_CURRENT_LIMIT = 40;
+  public static final double PIVOT_SUPPLY_CURRENT_LIMIT = 15;
 
-  public static final double PIVOT_DOWN_POSITION = 0.8;
-  public static final double PIVOT_UP_POSITION = 0.12; // -0.33
-  public static final double PIVOT_ALL_THE_WAY_UP_POSITION = 0.027;
+  public static final double PIVOT_DOWN_POSITION = 0.7;
+  public static final double PIVOT_UP_POSITION = 0.15; // -0.33
+  public static final double PIVOT_ALL_THE_WAY_UP_POSITION = 0.0;
 
   public static final double PIVOT_TICS = 50;
   public static final double PIVOT_BOUNCE_LIMIT = 25;
@@ -53,4 +53,5 @@ public class IntakeConstants {
   public static final double INTAKE_SPEED_INNER = 1;
 
   public static final double GEAR_RATIO = 1;
+  // -.70
 }

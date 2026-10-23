@@ -2,20 +2,19 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands.intake;
+package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class ReverseKickerAndRollers extends Command {
-  /** Creates a new ReverseKickerAndSpindexer. */
-  ShooterSubsystem shooter;
+public class ReverseRollers extends Command {
+  ShooterSubsystem shooterSubsystem;
 
-  public ReverseKickerAndRollers(ShooterSubsystem shooter) {
-    this.shooter = shooter;
-    // Use addRequirements() here to declare subsystem dependencies.
+  public ReverseRollers(ShooterSubsystem shooterSubsystem) {
+    this.shooterSubsystem = shooterSubsystem;
+    addRequirements(shooterSubsystem);
   }
 
   // Called when the command is initially scheduled.
@@ -25,15 +24,13 @@ public class ReverseKickerAndRollers extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    shooter.setKickerSpeed(-ShooterConstants.KICKER_PERCENT_OUTPUT);
-    shooter.setRollerSpeed(-ShooterConstants.SPINDEXER_INTAKE_SPEED);
+    shooterSubsystem.setRoller(-ShooterConstants.SPINDEXER_SHOOT_SPEED);
   }
 
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    shooter.setKickerSpeed(0);
-    shooter.setRollerSpeed(0);
+    shooterSubsystem.setRoller(0);
   }
 
   // Returns true when the command should end.

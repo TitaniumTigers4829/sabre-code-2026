@@ -25,7 +25,7 @@ public class MoveIntakeUpCommand extends Command {
   @Override
   public void execute() {
     // if (intakeSubsystem.getIntakeAngle() > IntakeConstants.PIVOT_UP_POSITION) {
-    intakeSubsystem.setPivotSpeed(-.1);
+    intakeSubsystem.setPivotSpeed(-.15);
     // } else {
     //   intakeSubsystem.setPivotSpeed(0);
     // }
