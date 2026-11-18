@@ -6,6 +6,7 @@ package frc.robot.subsystems.Elevator;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -21,6 +22,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   public TalonFXConfiguration configs = new TalonFXConfiguration();
   public StatusSignal<Angle> position = leaderMotor.getPosition();
   public StatusSignal<Voltage> voltage = leaderMotor.getMotorVoltage();
+  public PositionDutyCycle postionRequest = new PositionDutyCycle(0);
 
   // Remember this to continue, this bum ass honduras struggle with a get call
   // free candys are at andriianasa van
@@ -48,10 +50,21 @@ public class ElevatorSubsystem extends SubsystemBase {
     configs.Slot0.kG = 0.0;
     configs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
+
     leaderMotor.getConfigurator().apply(configs);
     configs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     followerMotor.getConfigurator().apply(configs);
   }
+
+    public void moveElevator(double moveElevator){
+      leaderMotor.setControl(postionRequest.withPosition(moveElevator)); 
+    }
+
+    public void manualElevator(double output){
+      leaderMotor.set(output);
+    }
+    
+  
 
   @Override
   public void periodic() {
