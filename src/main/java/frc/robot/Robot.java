@@ -28,6 +28,7 @@ import frc.robot.commands.shooter.PassFuelCommand;
 import frc.robot.commands.turret.ManualTurretCCWCommand;
 import frc.robot.commands.turret.ManualTurretCWCommand;
 import frc.robot.extras.util.JoystickUtil;
+import frc.robot.subsystems.Elevator.ElevatorSubsystem;
 import frc.robot.subsystems.adjustableHood.AdjustableHoodSubsystem;
 import frc.robot.subsystems.adjustableHood.PhysicalAdjustableHood;
 import frc.robot.subsystems.intake.IntakeSubsystem;
@@ -68,6 +69,7 @@ public class Robot extends LoggedRobot {
   private TurretSubsystem turretSubsystem;
   private AdjustableHoodSubsystem hoodSubsystem;
   private IntakeSubsystem intakeSubsystem;
+  private ElevatorSubsystem elevatorSubsystem;
 
   private Autos autos;
   private Command autoCommand;
@@ -351,6 +353,7 @@ public class Robot extends LoggedRobot {
         this.turretSubsystem = new TurretSubsystem(new PhysicalTurret());
         this.hoodSubsystem = new AdjustableHoodSubsystem(new PhysicalAdjustableHood());
         this.intakeSubsystem = new IntakeSubsystem(new PhysicalIntake());
+        this.elevatorSubsystem = new ElevatorSubsystem();
       }
       case DEV_ROBOT -> {
         /* Real robot, instantiate hardware IO implementations */
